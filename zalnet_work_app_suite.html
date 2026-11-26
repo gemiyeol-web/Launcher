@@ -17,25 +17,67 @@
             mono: ['JetBrains Mono', 'Consolas', 'monospace']
           },
           colors: {
-            canvas: '#f7f7f5',
-            surface: '#ffffff',
-            subtle: '#efefec',
-            line: '#d6d6d2',
-            linelight: '#e6e6e2',
-            ink: '#141414',
-            inksec: '#686864',
-            inkmuted: '#969692',
+            canvas: 'var(--bg-canvas)',
+            surface: 'var(--bg-surface)',
+            subtle: 'var(--bg-subtle)',
+            line: 'var(--border-line)',
+            linelight: 'var(--border-light)',
+            ink: 'var(--text-ink)',
+            inksec: 'var(--text-sec)',
+            inkmuted: 'var(--text-muted)',
             artblue: '#2563eb',
-            artbluebg: '#ebf2fe'
+            artbluebg: 'var(--bg-artblue)'
           }
         }
       }
     };
   </script>
   <style>
+    :root {
+      --bg-canvas: #f7f7f5;
+      --bg-surface: #ffffff;
+      --bg-subtle: #efefec;
+      --border-line: #d6d6d2;
+      --border-light: #e6e6e2;
+      --text-ink: #141414;
+      --text-sec: #686864;
+      --text-muted: #969692;
+      --bg-artblue: #ebf2fe;
+      --btn-solid-bg: #141414;
+      --btn-solid-fg: #ffffff;
+      --btn-solid-hover: #333333;
+      --icon-box-bg: #f5f5f2;
+    }
+
+    html.theme-dark {
+      --bg-canvas: #141413;
+      --bg-surface: #1e1e1c;
+      --bg-subtle: #282825;
+      --border-line: #3a3a36;
+      --border-light: #2c2c29;
+      --text-ink: #f3f3f0;
+      --text-sec: #a6a6a0;
+      --text-muted: #767670;
+      --bg-artblue: #17253f;
+      --btn-solid-bg: #f3f3f0;
+      --btn-solid-fg: #141414;
+      --btn-solid-hover: #dcdcd8;
+      --icon-box-bg: #262623;
+    }
+
     * { box-sizing: border-box; }
     body.focus-fullscreen #top-header { display: none !important; }
     body.focus-fullscreen #exit-fullscreen-pill { display: flex !important; }
+
+    .btn-solid {
+      background-color: var(--btn-solid-bg);
+      color: var(--btn-solid-fg);
+      border-color: var(--btn-solid-bg);
+    }
+    .btn-solid:hover {
+      background-color: var(--btn-solid-hover);
+      border-color: var(--btn-solid-hover);
+    }
 
     .app-frame {
       position: absolute;
@@ -57,9 +99,9 @@
     }
 
     ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #f7f7f5; }
-    ::-webkit-scrollbar-thumb { background: #cfcfc9; }
-    ::-webkit-scrollbar-thumb:hover { background: #9e9e98; }
+    ::-webkit-scrollbar-track { background: var(--bg-canvas); }
+    ::-webkit-scrollbar-thumb { background: var(--border-line); }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
   </style>
 </head>
 <body class="bg-canvas text-ink font-sans h-screen flex flex-col overflow-hidden select-none">
@@ -71,35 +113,40 @@
         <span>◼ ZALNET</span>
       </button>
       <div class="w-px h-4 bg-line shrink-0"></div>
-      <span class="font-mono text-[11px] text-inksec tracking-[0.06em] hidden md:inline shrink-0">WORK APP SUITE</span>
+      <span class="font-mono text-[11px] text-inksec tracking-[0.06em] hidden lg:inline shrink-0">WORK APP SUITE</span>
+      <span id="sandbox-header-badge" class="hidden font-mono text-[10px] font-bold px-2 py-0.5 bg-amber-500/20 text-amber-600 border border-amber-500/40 shrink-0">SANDBOX MODE</span>
 
       <!-- 실행 및 등록 앱 빠른 전환 탭 -->
-      <nav id="quick-tabs" class="flex items-center gap-1 ml-2 overflow-x-auto max-w-[42vw]"></nav>
+      <nav id="quick-tabs" class="flex items-center gap-1 ml-1 overflow-x-auto max-w-[38vw]"></nav>
     </div>
 
     <!-- 우측 유틸리티 액션 버튼 -->
     <div class="flex items-center gap-1.5 shrink-0">
-      <button type="button" id="btn-reload-current-app" onclick="openOrSwitchApp(activeViewId, true)" title="현재 앱의 최신 GitHub 코드 즉시 새로고침" class="hidden h-[30px] px-2.5 bg-surface border border-line text-ink text-xs font-medium hover:bg-subtle hover:border-[#a8a8a4] transition-colors items-center gap-1 rounded-none">
+      <button type="button" id="btn-reload-current-app" onclick="openOrSwitchApp(activeViewId, true)" title="현재 앱의 최신 GitHub 코드 즉시 새로고침" class="hidden h-[30px] px-2.5 bg-surface border border-line text-ink text-xs font-medium hover:bg-subtle transition-colors items-center gap-1 rounded-none">
         <span>↻</span>
         <span class="hidden sm:inline">새로고침</span>
       </button>
-      <button type="button" id="btn-close-current-app" onclick="closeRunningApp(activeViewId)" title="현재 실행 중인 프로그램 닫기" class="hidden h-[30px] px-2.5 bg-red-50 border border-red-300 text-red-700 text-xs font-medium hover:bg-red-600 hover:text-white hover:border-red-600 transition-colors items-center gap-1 rounded-none">
+      <button type="button" id="btn-close-current-app" onclick="closeRunningApp(activeViewId)" title="현재 실행 중인 프로그램 닫기" class="hidden h-[30px] px-2.5 bg-red-500/10 border border-red-400/50 text-red-600 text-xs font-medium hover:bg-red-600 hover:text-white hover:border-red-600 transition-colors items-center gap-1 rounded-none">
         <span>✕</span>
         <span>현재 앱 닫기</span>
       </button>
-      <button type="button" onclick="openDataFolder()" title="현재 저장 폴더 열기" class="h-[30px] px-2.5 bg-surface border border-line text-ink text-xs hover:bg-subtle hover:border-[#a8a8a4] transition-colors flex items-center gap-1.5 rounded-none">
+      <button type="button" onclick="openDataFolder()" title="현재 저장 폴더 열기" class="h-[30px] px-2.5 bg-surface border border-line text-ink text-xs hover:bg-subtle transition-colors flex items-center gap-1.5 rounded-none">
         <span>📁</span>
         <span class="hidden sm:inline">저장폴더</span>
       </button>
-      <button type="button" onclick="openBackupModal()" title="백업 및 저장 경로 관리" class="h-[30px] px-2.5 bg-surface border border-line text-ink text-xs hover:bg-subtle hover:border-[#a8a8a4] transition-colors flex items-center gap-1.5 rounded-none">
+      <button type="button" onclick="openBackupModal()" title="백업 및 복원 관리" class="h-[30px] px-2.5 bg-surface border border-line text-ink text-xs hover:bg-subtle transition-colors flex items-center gap-1.5 rounded-none">
         <span>💾</span>
         <span class="hidden sm:inline">백업관리</span>
       </button>
-      <button type="button" onclick="openAddAppModal()" title="새 HTML 프로그램 추가" class="h-[30px] px-2.5 bg-surface border border-line text-ink text-xs hover:bg-subtle hover:border-[#a8a8a4] transition-colors flex items-center gap-1 rounded-none">
+      <button type="button" onclick="openAddAppModal()" title="새 HTML 프로그램 추가" class="h-[30px] px-2.5 bg-surface border border-line text-ink text-xs hover:bg-subtle transition-colors flex items-center gap-1 rounded-none">
         <span>+</span>
-        <span>프로그램 추가</span>
+        <span class="hidden md:inline">프로그램 추가</span>
       </button>
-      <button type="button" onclick="toggleFocusFullscreen()" title="전체화면 집중 모드 (F11)" class="h-[30px] px-2.5 bg-ink text-white border border-ink text-xs hover:bg-[#333333] transition-colors flex items-center gap-1.5 rounded-none">
+      <button type="button" id="btn-nav-settings" onclick="showSettingsView()" title="런처 환경설정 (테마·업데이트·트레이·자동실행)" class="h-[30px] px-2.5 bg-surface border border-line text-ink text-xs hover:bg-subtle transition-colors flex items-center gap-1.5 rounded-none">
+        <span>⚙️</span>
+        <span class="hidden sm:inline">설정</span>
+      </button>
+      <button type="button" onclick="toggleFocusFullscreen()" title="전체화면 집중 모드 (F11)" class="h-[30px] px-2.5 btn-solid border text-xs transition-colors flex items-center gap-1.5 rounded-none">
         <span>⛶</span>
         <span class="hidden sm:inline">전체화면</span>
       </button>
@@ -115,13 +162,13 @@
       <!-- 필터 및 검색 툴바 -->
       <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
         <div class="flex items-center gap-1.5">
-          <button type="button" id="tab-all" onclick="setFilter('all')" class="h-8 px-3.5 font-mono text-[11px] font-semibold border border-ink bg-ink text-white tracking-[0.04em]">
+          <button type="button" id="tab-all" onclick="setFilter('all')" class="h-8 px-3.5 font-mono text-[11px] font-semibold border btn-solid tracking-[0.04em]">
             ALL APPS (<span id="total-count">6</span>)
           </button>
           <button type="button" id="tab-running" onclick="setFilter('running')" class="h-8 px-3.5 font-mono text-[11px] font-semibold border border-line bg-surface text-inksec hover:text-ink tracking-[0.04em]">
             RUNNING (<span id="running-count">0</span>)
           </button>
-          <button type="button" id="btn-sync-all" onclick="syncAllMetadataFromGitHub(true)" title="GitHub에서 모든 앱의 최신 버전 및 업데이트 일자 동기화" class="w-8 h-8 rounded-full border border-line bg-surface hover:bg-subtle flex items-center justify-center text-sm transition-transform duration-300">
+          <button type="button" id="btn-sync-all" onclick="syncAllMetadataFromGitHub(true)" title="GitHub에서 모든 앱의 최신 버전 및 업데이트 일자 확인" class="w-8 h-8 rounded-full border border-line bg-surface hover:bg-subtle flex items-center justify-center text-sm transition-transform duration-300">
             ↻
           </button>
         </div>
@@ -138,11 +185,17 @@
         </div>
       </div>
 
-      <!-- 섹션 구분선 및 저장 경로 제어 -->
+      <!-- 섹션 구분선 및 저장 경로·업데이트 모드 요약 -->
       <div class="font-mono text-[10px] text-inkmuted tracking-[0.06em] pb-2 border-b border-linelight mb-4 flex justify-between items-center gap-2 flex-wrap">
-        <span>INSTALLED &amp; CLOUD LINKED APPS</span>
+        <div class="flex items-center gap-2">
+          <span>INSTALLED &amp; CLOUD LINKED APPS</span>
+          <span class="text-line">|</span>
+          <button type="button" onclick="showSettingsView()" id="update-mode-pill" class="text-inksec hover:text-ink underline">
+            UPDATE: AUTOMATIC
+          </button>
+        </div>
         <div class="flex items-center gap-2 max-w-full">
-          <span id="data-path-preview" class="truncate max-w-[340px] sm:max-w-[460px]">STORAGE: READY</span>
+          <span id="data-path-preview" class="truncate max-w-[300px] sm:max-w-[440px]">STORAGE: READY</span>
           <button type="button" onclick="changeDataFolder()" class="px-1.5 py-0.5 bg-surface border border-line text-ink hover:bg-subtle text-[10px] shrink-0">경로 변경</button>
           <button type="button" id="btn-reset-path" onclick="resetDataFolder()" class="hidden px-1.5 py-0.5 bg-surface border border-line text-inksec hover:bg-subtle text-[10px] shrink-0">기본경로</button>
         </div>
@@ -152,13 +205,13 @@
       <div id="apps-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
 
       <!-- 하단 상태 안내 배너 (최하단 배치) -->
-      <div id="status-banner" class="bg-artbluebg border border-[#cfe0fc] px-3.5 py-2.5 flex items-center justify-between mt-8 text-[13px] gap-3">
+      <div id="status-banner" class="bg-artbluebg border border-artblue/30 px-3.5 py-2.5 flex items-center justify-between mt-8 text-[13px] gap-3">
         <div class="flex items-center gap-2.5 min-w-0">
           <span class="bg-artblue text-white font-mono text-[10px] font-bold px-2 py-0.5 tracking-[0.05em] shrink-0">GITHUB SYNC</span>
           <span id="banner-text" class="text-ink truncate">GitHub 저장소의 최신 버전이 자동 반영되며, 프로그램을 전환해도 작업 화면과 로컬 데이터가 그대로 유지됩니다.</span>
         </div>
         <div class="flex items-center gap-2 shrink-0">
-          <button type="button" onclick="openDataFolder()" class="bg-ink text-white font-mono text-[11px] px-3 py-1.5 tracking-[0.04em] hover:bg-[#333333] transition-colors">
+          <button type="button" onclick="openDataFolder()" class="btn-solid font-mono text-[11px] px-3 py-1.5 tracking-[0.04em] transition-colors">
             OPEN DATA FOLDER
           </button>
           <button type="button" onclick="document.getElementById('status-banner').style.display='none'" class="text-inksec hover:text-ink px-1.5 text-sm">✕</button>
@@ -166,17 +219,164 @@
       </div>
     </section>
 
-    <!-- 2. 백그라운드 상태 유지 멀티 워크스페이스 -->
+    <!-- 2. ArtCraft 스타일 전용 환경설정 화면 (SETTINGS) -->
+    <section id="settings-view" class="hidden absolute inset-0 overflow-y-auto px-5 md:px-7 pt-6 pb-14 bg-canvas z-20">
+      <div class="max-w-5xl mx-auto flex flex-col gap-5">
+        <div class="flex items-center justify-between border-b border-line pb-3">
+          <div>
+            <div class="font-mono text-[10px] text-inkmuted tracking-[0.08em]">ZALNET LAUNCHER PREFERENCES</div>
+            <h1 class="text-lg font-extrabold tracking-tight text-ink mt-0.5">런처 환경설정 (SETTINGS)</h1>
+          </div>
+          <button type="button" onclick="showDashboard()" class="h-8 px-3.5 bg-surface border border-line text-xs font-medium hover:bg-subtle flex items-center gap-1.5">
+            <span>←</span>
+            <span>대시보드로 돌아가기</span>
+          </button>
+        </div>
+
+        <!-- 2단 카드 그리드 (ArtCraft 설정 UI 구조) -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+
+          <!-- 좌측 컬럼 -->
+          <div class="flex flex-col gap-4">
+
+            <!-- 카드 1: UPDATES (업데이트 방식 및 알림) -->
+            <div class="bg-surface border border-line p-4 flex flex-col gap-3.5">
+              <div class="font-mono text-[10px] font-bold text-inkmuted tracking-[0.08em]">UPDATES</div>
+
+              <div class="flex items-center justify-between gap-3">
+                <label for="setting-update-mode" class="text-[13px] font-medium text-ink">Check for updates (업데이트 방식)</label>
+                <select id="setting-update-mode" onchange="updateLauncherSetting('updateMode', this.value)" class="h-8 px-3 border border-line bg-surface text-xs text-ink font-medium outline-none focus:border-ink min-w-[165px]">
+                  <option value="auto">Automatically (자동)</option>
+                  <option value="manual">Manually (수동)</option>
+                </select>
+              </div>
+              <p class="text-[11px] text-inksec leading-relaxed -mt-1.5">
+                <strong>자동(Automatically):</strong> 앱 실행 시 항상 GitHub에서 최신 코드를 받아옵니다.<br/>
+                <strong>수동(Manually):</strong> 기존에 저장된 안정 버전을 즉시 실행하고, 새 버전이 있을 때 카드에 업데이트 버튼을 띄웁니다.
+              </p>
+
+              <label class="flex items-center gap-2.5 text-[13px] text-ink cursor-pointer pt-1">
+                <input type="checkbox" id="setting-notify-update" onchange="updateLauncherSetting('notifyUpdates', this.checked)" class="w-4 h-4 accent-ink" />
+                <span>Notify me when an app has an update (업데이트 알림 뱃지 표시)</span>
+              </label>
+
+              <div class="border-t border-linelight pt-3 flex items-center justify-between gap-2">
+                <div>
+                  <div class="text-xs font-medium text-ink">Launcher version</div>
+                  <div class="font-mono text-[11px] text-inkmuted mt-0.5">v2.0.0 (GitHub Cloud Sync)</div>
+                </div>
+                <button type="button" onclick="syncAllMetadataFromGitHub(true)" class="h-8 px-3 bg-surface border border-line text-xs font-mono hover:bg-subtle">
+                  CHECK ALL NOW
+                </button>
+              </div>
+            </div>
+
+            <!-- 카드 2: APPEARANCE (화면 테마) -->
+            <div class="bg-surface border border-line p-4 flex flex-col gap-3">
+              <div class="font-mono text-[10px] font-bold text-inkmuted tracking-[0.08em]">APPEARANCE</div>
+              <div class="inline-flex border border-line self-start">
+                <button type="button" id="theme-btn-system" onclick="updateLauncherSetting('theme', 'system')" class="h-8 px-3.5 font-mono text-[11px] font-semibold tracking-[0.04em] border-r border-line transition-colors">
+                  MATCH SYSTEM
+                </button>
+                <button type="button" id="theme-btn-dark" onclick="updateLauncherSetting('theme', 'dark')" class="h-8 px-3.5 font-mono text-[11px] font-semibold tracking-[0.04em] border-r border-line transition-colors">
+                  DARK
+                </button>
+                <button type="button" id="theme-btn-light" onclick="updateLauncherSetting('theme', 'light')" class="h-8 px-3.5 font-mono text-[11px] font-semibold tracking-[0.04em] transition-colors">
+                  LIGHT
+                </button>
+              </div>
+              <p class="text-[11px] text-inksec">런처 프레임의 색상 테마를 설정합니다. (개별 업무 프로그램 화면은 원본 색상이 유지됩니다.)</p>
+            </div>
+
+            <!-- 카드 3: SANDBOX / TEST MODE (샌드박스 모드) -->
+            <div class="bg-surface border border-line p-4 flex flex-col gap-2.5">
+              <div class="font-mono text-[10px] font-bold text-inkmuted tracking-[0.08em]">SANDBOX / TEST MODE</div>
+              <label class="flex items-center gap-2.5 text-[13px] font-medium text-ink cursor-pointer">
+                <input type="checkbox" id="setting-sandbox-mode" onchange="updateLauncherSetting('sandboxMode', this.checked)" class="w-4 h-4 accent-ink" />
+                <span>Enable sandbox mode (별도 테스트 모드로 실행)</span>
+              </label>
+              <p class="text-[11px] text-inksec leading-relaxed">
+                체크 시 실제 로컬 JSON 저장 파일을 덮어쓰지 않고 임시 메모리에서만 데이터를 테스트합니다. GitHub에서 코드를 크게 수정한 뒤 안전하게 검증할 때 사용하세요.
+              </p>
+            </div>
+
+            <!-- 카드 4: QUICK LINKS (업무 바로가기 - ArtCraft COMMUNITY 스타일) -->
+            <div class="bg-surface border border-line p-4 flex flex-col gap-3">
+              <div class="flex items-center justify-between">
+                <div class="font-mono text-[10px] font-bold text-inkmuted tracking-[0.08em]">QUICK WORK LINKS</div>
+                <button type="button" onclick="openQuickLinksEditor()" class="font-mono text-[10px] text-inksec hover:text-ink underline">링크 편집</button>
+              </div>
+              <p class="text-xs text-inksec">자주 사용하는 외부 사이트를 기본 웹 브라우저(크롬·엣지)로 즉시 엽니다.</p>
+              <div id="quick-links-buttons" class="flex flex-wrap gap-2"></div>
+            </div>
+
+          </div>
+
+          <!-- 우측 컬럼 -->
+          <div class="flex flex-col gap-4">
+
+            <!-- 카드 5: DATA STORAGE FOLDER (기본 저장 폴더 - ArtCraft DEFAULT INSTALL FOLDER 스타일) -->
+            <div class="bg-surface border border-line p-4 flex flex-col gap-3">
+              <div class="font-mono text-[10px] font-bold text-inkmuted tracking-[0.08em]">DATA STORAGE FOLDER</div>
+              <div class="text-[13px] font-medium text-ink">Storage folder (데이터 JSON 저장 위치)</div>
+              <div id="settings-data-path" class="font-mono text-xs text-inksec bg-subtle border border-line px-3 py-2 break-all">
+                Loading...
+              </div>
+              <p class="text-[11px] text-inksec">모든 프로그램의 작업 데이터와 백업 스냅샷이 이 폴더에 저장됩니다.</p>
+              <div class="flex flex-wrap gap-2">
+                <button type="button" onclick="changeDataFolder()" class="h-8 px-3.5 bg-surface border border-line font-mono text-[11px] font-semibold hover:bg-subtle tracking-[0.04em]">
+                  BROWSE...
+                </button>
+                <button type="button" onclick="resetDataFolder()" class="h-8 px-3.5 bg-surface border border-line font-mono text-[11px] font-semibold hover:bg-subtle tracking-[0.04em]">
+                  USE DEFAULT
+                </button>
+                <button type="button" onclick="openDataFolder()" class="h-8 px-3.5 btn-solid border font-mono text-[11px] font-semibold tracking-[0.04em]">
+                  OPEN FOLDER
+                </button>
+              </div>
+            </div>
+
+            <!-- 카드 6: RUNNING IN THE BACKGROUND (트레이 최소화 & 윈도우 자동 실행) -->
+            <div class="bg-surface border border-line p-4 flex flex-col gap-3.5">
+              <div class="font-mono text-[10px] font-bold text-inkmuted tracking-[0.08em]">RUNNING IN THE BACKGROUND</div>
+
+              <label class="flex items-start gap-2.5 text-[13px] text-ink cursor-pointer">
+                <input type="checkbox" id="setting-keep-tray" onchange="toggleKeepInTraySetting(this.checked)" class="w-4 h-4 mt-0.5 accent-ink" />
+                <div>
+                  <div class="font-medium">Keep running in the tray when the window is closed</div>
+                  <div class="text-[11px] text-inksec mt-0.5">창 우측 상단 닫기(X) 버튼을 눌러도 종료되지 않고 윈도우 작업 표시줄 트레이 아이콘으로 숨겨집니다. (완전 종료는 트레이 아이콘 우클릭 → 완전 종료)</div>
+                </div>
+              </label>
+
+              <label class="flex items-start gap-2.5 text-[13px] text-ink cursor-pointer border-t border-linelight pt-3">
+                <input type="checkbox" id="setting-autostart" onchange="toggleAutostartSetting(this.checked)" class="w-4 h-4 mt-0.5 accent-ink" />
+                <div>
+                  <div class="font-medium">Start ZALNET Launcher when I log in</div>
+                  <div class="text-[11px] text-inksec mt-0.5">윈도우 컴퓨터를 켜고 로그인할 때 ZALNET WORK APP SUITE를 자동으로 실행합니다.</div>
+                </div>
+              </label>
+
+              <div id="native-status-note" class="font-mono text-[10px] text-inkmuted bg-canvas border border-linelight px-2.5 py-1.5">
+                ENV CHECKING...
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. 백그라운드 상태 유지 멀티 워크스페이스 -->
     <div id="workspaces-container" class="absolute inset-0 bg-surface z-[1]"></div>
   </main>
 
   <!-- 전체화면 해제 플로팅 버튼 -->
-  <button type="button" id="exit-fullscreen-pill" onclick="toggleFocusFullscreen(false)" class="hidden fixed top-2.5 right-3.5 z-[9999] bg-ink/90 text-white border border-white/20 px-3 py-1.5 text-[11px] font-mono hover:bg-black backdrop-blur-sm items-center gap-1.5">
+  <button type="button" id="exit-fullscreen-pill" onclick="toggleFocusFullscreen(false)" class="hidden fixed top-2.5 right-3.5 z-[9999] bg-ink/90 text-surface border border-white/20 px-3 py-1.5 text-[11px] font-mono hover:opacity-90 backdrop-blur-sm items-center gap-1.5">
     <span>⛶ 전체화면 종료 (ESC)</span>
   </button>
 
   <!-- 알림 토스트 -->
-  <div id="toast-box" class="hidden fixed bottom-4 right-4 bg-ink text-white px-4 py-2.5 text-xs font-mono z-[999] shadow-lg border border-white/10 max-w-md"></div>
+  <div id="toast-box" class="hidden fixed bottom-4 right-4 bg-ink text-surface px-4 py-2.5 text-xs font-mono z-[999] shadow-lg border border-white/10 max-w-md"></div>
 
   <!-- 모달 1: 프로그램 정보 수정 및 신규 추가 -->
   <div id="edit-modal" class="hidden fixed inset-0 bg-black/45 items-center justify-center z-50 p-4">
@@ -190,35 +390,35 @@
         <div class="flex flex-col gap-1">
           <label class="text-xs font-semibold text-inksec">GitHub HTML 주소 (일반 주소 또는 Raw 주소)</label>
           <div class="flex gap-1.5">
-            <input type="text" id="edit-app-url" placeholder="https://github.com/아이디/저장소/blob/main/파일.html" class="flex-1 h-8 px-2.5 border border-line text-xs font-mono outline-none focus:border-ink" />
-            <button type="button" onclick="autoFillFromGitHubUrl()" class="h-8 px-2.5 bg-subtle border border-line text-xs font-medium hover:bg-line/50 shrink-0">자동 인식</button>
+            <input type="text" id="edit-app-url" placeholder="https://github.com/아이디/저장소/blob/main/파일.html" class="flex-1 h-8 px-2.5 border border-line bg-surface text-ink text-xs font-mono outline-none focus:border-ink" />
+            <button type="button" onclick="autoFillFromGitHubUrl()" class="h-8 px-2.5 bg-subtle border border-line text-xs font-medium hover:opacity-80 shrink-0">자동 인식</button>
           </div>
         </div>
         <div class="flex flex-col gap-1">
           <label class="text-xs font-semibold text-inksec">프로그램 표시 이름</label>
-          <input type="text" id="edit-app-name" placeholder="예: 마진 시뮬레이터" class="h-8 px-2.5 border border-line text-xs outline-none focus:border-ink" />
+          <input type="text" id="edit-app-name" placeholder="예: 마진 시뮬레이터" class="h-8 px-2.5 border border-line bg-surface text-ink text-xs outline-none focus:border-ink" />
         </div>
         <div class="flex flex-col gap-1">
           <label class="text-xs font-semibold text-inksec">부제목 (역할 요약)</label>
-          <input type="text" id="edit-app-subtitle" placeholder="예: Margin & Cost Simulator" class="h-8 px-2.5 border border-line text-xs outline-none focus:border-ink" />
+          <input type="text" id="edit-app-subtitle" placeholder="예: Margin & Cost Simulator" class="h-8 px-2.5 border border-line bg-surface text-ink text-xs outline-none focus:border-ink" />
         </div>
         <div class="flex flex-col gap-1">
           <label class="text-xs font-semibold text-inksec">상세 설명</label>
-          <input type="text" id="edit-app-desc" placeholder="프로그램에 대한 간단한 설명" class="h-8 px-2.5 border border-line text-xs outline-none focus:border-ink" />
+          <input type="text" id="edit-app-desc" placeholder="프로그램에 대한 간단한 설명" class="h-8 px-2.5 border border-line bg-surface text-ink text-xs outline-none focus:border-ink" />
         </div>
         <div class="flex flex-col gap-1">
           <label class="text-xs font-semibold text-inksec">버전 태그 (AUTO 입력 시 GitHub 코드에서 자동 감지)</label>
-          <input type="text" id="edit-app-version" placeholder="AUTO" class="h-8 px-2.5 border border-line text-xs font-mono outline-none focus:border-ink" />
+          <input type="text" id="edit-app-version" placeholder="AUTO" class="h-8 px-2.5 border border-line bg-surface text-ink text-xs font-mono outline-none focus:border-ink" />
         </div>
       </div>
       <div class="px-4 py-3 border-t border-line bg-canvas flex justify-between items-center gap-2">
         <div class="flex gap-1.5">
           <button type="button" id="btn-reload-source" onclick="reloadAppFromModal()" class="h-8 px-2.5 bg-surface border border-line text-xs hover:bg-subtle">🔄 최신 코드 재시작</button>
-          <button type="button" id="btn-delete-app" onclick="deleteAppFromModal()" class="h-8 px-2.5 bg-surface border border-red-300 text-red-600 text-xs hover:bg-red-50">삭제</button>
+          <button type="button" id="btn-delete-app" onclick="deleteAppFromModal()" class="h-8 px-2.5 bg-surface border border-red-400 text-red-600 text-xs hover:bg-red-500/10">삭제</button>
         </div>
         <div class="flex gap-1.5">
           <button type="button" onclick="closeModal('edit-modal')" class="h-8 px-3 bg-surface border border-line text-xs hover:bg-subtle">취소</button>
-          <button type="button" onclick="saveAppEdit()" class="h-8 px-3.5 bg-ink text-white text-xs font-medium hover:bg-[#333333]">저장하기</button>
+          <button type="button" onclick="saveAppEdit()" class="h-8 px-3.5 btn-solid border text-xs font-medium">저장하기</button>
         </div>
       </div>
     </div>
@@ -232,12 +432,11 @@
         <button type="button" onclick="closeModal('backup-modal')" class="h-7 w-7 border border-line bg-surface hover:bg-subtle flex items-center justify-center text-xs">✕</button>
       </div>
       <div class="p-4 overflow-y-auto flex flex-col gap-3.5 text-[13px]">
-        <!-- 저장 폴더 지정 섹션 (클라우드 동기화 폴더 연동) -->
         <div class="bg-canvas border border-line p-3 flex flex-col gap-2">
           <div class="flex justify-between items-center">
-            <span class="font-mono text-[10px] font-bold text-inksec tracking-[0.06em]">DATA STORAGE DIRECTORY (공유/클라우드 폴더 연동)</span>
+            <span class="font-mono text-[10px] font-bold text-inksec tracking-[0.06em]">DATA STORAGE DIRECTORY</span>
             <div class="flex gap-1.5">
-              <button type="button" onclick="changeDataFolder()" class="h-6 px-2 bg-ink text-white text-[11px] hover:bg-[#333333]">폴더 선택</button>
+              <button type="button" onclick="changeDataFolder()" class="h-6 px-2 btn-solid text-[11px]">폴더 선택</button>
               <button type="button" onclick="resetDataFolder()" class="h-6 px-2 bg-surface border border-line text-ink text-[11px] hover:bg-subtle">기본값 복원</button>
             </div>
           </div>
@@ -245,7 +444,7 @@
         </div>
 
         <div class="flex gap-2 flex-wrap">
-          <button type="button" onclick="createFullBackup()" class="h-8 px-3 bg-ink text-white text-xs font-medium hover:bg-[#333333]">+ 현재 전체 데이터 백업 생성</button>
+          <button type="button" onclick="createFullBackup()" class="h-8 px-3 btn-solid text-xs font-medium">+ 현재 전체 데이터 백업 생성</button>
           <button type="button" onclick="exportBackupFile()" class="h-8 px-3 bg-surface border border-line text-xs hover:bg-subtle">📤 JSON 파일로 내보내기</button>
           <label class="h-8 px-3 bg-surface border border-line text-xs hover:bg-subtle flex items-center cursor-pointer">
             <span>📥 백업 파일 불러오기</span>
@@ -272,14 +471,34 @@
     </div>
   </div>
 
-  <!-- 모달 3: 커스텀 확인 대화상자 -->
+  <!-- 모달 3: 빠른 업무 링크 편집 -->
+  <div id="links-modal" class="hidden fixed inset-0 bg-black/45 items-center justify-center z-50 p-4">
+    <div class="bg-surface border border-ink w-full max-w-lg max-h-[85vh] flex flex-col shadow-xl">
+      <div class="px-4 py-3.5 border-b border-line flex justify-between items-center font-bold text-sm">
+        <span>🔗 빠른 업무 바로가기 링크 편집</span>
+        <button type="button" onclick="closeModal('links-modal')" class="h-7 w-7 border border-line bg-surface hover:bg-subtle flex items-center justify-center text-xs">✕</button>
+      </div>
+      <div class="p-4 overflow-y-auto flex flex-col gap-3 text-xs">
+        <div id="quick-links-editor-list" class="flex flex-col gap-2"></div>
+        <button type="button" onclick="addQuickLinkRow()" class="h-8 px-3 bg-subtle border border-line text-ink font-medium hover:opacity-80 self-start">
+          + 바로가기 버튼 추가
+        </button>
+      </div>
+      <div class="px-4 py-3 border-t border-line bg-canvas flex justify-end gap-1.5">
+        <button type="button" onclick="closeModal('links-modal')" class="h-8 px-3 bg-surface border border-line text-xs hover:bg-subtle">취소</button>
+        <button type="button" onclick="saveQuickLinksEditor()" class="h-8 px-3.5 btn-solid text-xs font-medium">저장하기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 모달 4: 커스텀 확인 대화상자 -->
   <div id="confirm-modal" class="hidden fixed inset-0 bg-black/50 items-center justify-center z-[60] p-4">
     <div class="bg-surface border border-ink w-full max-w-sm flex flex-col shadow-xl">
       <div class="px-4 py-3 border-b border-line font-bold text-sm" id="confirm-title">확인</div>
       <div class="p-4 text-xs text-inksec leading-relaxed whitespace-pre-line" id="confirm-message"></div>
       <div class="px-4 py-2.5 border-t border-line bg-canvas flex justify-end gap-1.5">
         <button type="button" id="confirm-cancel-btn" class="h-7 px-3 bg-surface border border-line text-xs hover:bg-subtle">취소</button>
-        <button type="button" id="confirm-ok-btn" class="h-7 px-3 bg-ink text-white text-xs font-medium hover:bg-[#333333]">확인</button>
+        <button type="button" id="confirm-ok-btn" class="h-7 px-3 btn-solid text-xs font-medium">확인</button>
       </div>
     </div>
   </div>
@@ -348,24 +567,46 @@
       }
     ];
 
+    const DEFAULT_QUICK_LINKS = [
+      { label: 'GITHUB REPO', url: 'https://github.com/gemiyeol-web', primary: true },
+      { label: 'COUPANG WING', url: 'https://wing.coupang.com', primary: false },
+      { label: 'SMARTSTORE', url: 'https://sell.smartstore.naver.com', primary: false }
+    ];
+
+    const DEFAULT_SETTINGS = {
+      theme: 'light',          // 'system' | 'dark' | 'light'
+      updateMode: 'auto',      // 'auto' | 'manual'
+      notifyUpdates: true,
+      sandboxMode: false,
+      keepInTray: true,
+      autostart: false,
+      quickLinks: DEFAULT_QUICK_LINKS
+    };
+
     const SVG_ICONS = {
-      beurer: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="1.6"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/><circle cx="12" cy="12" r="4" fill="#e5e5e0"/></svg>',
-      coupang: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="1.6"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" fill="#e5e5e0"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>',
-      ad: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" fill="#e5e5e0"/><line x1="8" y1="17" x2="8" y2="11"/><line x1="12" y1="17" x2="12" y2="7"/><line x1="16" y1="17" x2="16" y2="13"/></svg>',
-      margin: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="1.6"><rect x="4" y="2" width="16" height="20" fill="#e5e5e0"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="10" y2="10"/><line x1="14" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="10" y2="14"/><line x1="14" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="16" y2="18"/></svg>',
-      qna: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="1.6"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" fill="#e5e5e0"/></svg>',
-      balju: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="1.6"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" fill="#e5e5e0"/><rect x="9" y="3" width="6" height="4"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>',
-      custom: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="1.6"><polygon points="12 2 2 7 12 12 22 7 12 2" fill="#e5e5e0"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>'
+      beurer: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/><circle cx="12" cy="12" r="4" fill="rgba(128,128,128,0.18)"/></svg>',
+      coupang: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" fill="rgba(128,128,128,0.18)"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>',
+      ad: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" fill="rgba(128,128,128,0.18)"/><line x1="8" y1="17" x2="8" y2="11"/><line x1="12" y1="17" x2="12" y2="7"/><line x1="16" y1="17" x2="16" y2="13"/></svg>',
+      margin: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="2" width="16" height="20" fill="rgba(128,128,128,0.18)"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="10" y2="10"/><line x1="14" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="10" y2="14"/><line x1="14" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="16" y2="18"/></svg>',
+      qna: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" fill="rgba(128,128,128,0.18)"/></svg>',
+      balju: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" fill="rgba(128,128,128,0.18)"/><rect x="9" y="3" width="6" height="4"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>',
+      custom: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polygon points="12 2 2 7 12 12 22 7 12 2" fill="rgba(128,128,128,0.18)"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>'
     };
 
     const CUSTOM_DIR_KEY = 'zalnet_custom_data_dir';
+    const SETTINGS_KEY = 'zalnet_launcher_settings_v1';
+    const HTML_CACHE_PREFIX = 'zalnet_app_html_snapshot_';
+
     let appsList = [];
+    let launcherSettings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
     let activeViewId = 'dashboard';
     const runningAppIds = new Set();
     const blobUrls = {};
     const storageCache = {};
+    const sandboxCache = {};
     const saveTimers = {};
     const loadedSnapshotsCache = {};
+    const appUpdateAvailable = {}; // appId -> boolean
     let currentFilter = 'all';
     let isSuiteBooted = false;
 
@@ -375,10 +616,14 @@
       const el = document.getElementById('toast-box');
       if (!el) return;
       el.innerText = message;
-      el.classList.remove('hidden', 'bg-ink', 'bg-red-700', 'bg-green-700');
-      if (type === 'error') el.classList.add('bg-red-700');
-      else if (type === 'success') el.classList.add('bg-green-700');
-      else el.classList.add('bg-ink');
+      el.classList.remove('hidden', 'bg-ink', 'bg-red-700', 'bg-green-700', 'text-surface', 'text-white');
+      if (type === 'error') {
+        el.classList.add('bg-red-700', 'text-white');
+      } else if (type === 'success') {
+        el.classList.add('bg-green-700', 'text-white');
+      } else {
+        el.classList.add('bg-ink', 'text-surface');
+      }
 
       clearTimeout(toastTimer);
       toastTimer = setTimeout(() => {
@@ -420,7 +665,165 @@
       return !!(t && t.core && t.core.invoke && t.path);
     }
 
-    // 기본 설치 폴더 내 data 경로 (예외 시 로컬폴백 반환)
+    /* 테마 및 설정 관리 */
+    function loadSettingsSync() {
+      try {
+        const raw = window.localStorage.getItem(SETTINGS_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          launcherSettings = {
+            ...DEFAULT_SETTINGS,
+            ...parsed,
+            quickLinks: Array.isArray(parsed.quickLinks) && parsed.quickLinks.length > 0
+              ? parsed.quickLinks
+              : JSON.parse(JSON.stringify(DEFAULT_QUICK_LINKS))
+          };
+        }
+      } catch (e) {}
+      applyTheme(launcherSettings.theme);
+      applySandboxBadge();
+    }
+
+    async function saveSettings() {
+      try {
+        window.localStorage.setItem(SETTINGS_KEY, JSON.stringify(launcherSettings));
+      } catch (e) {}
+      await saveLauncherConfig();
+    }
+
+    function applyTheme(mode) {
+      const root = document.documentElement;
+      let isDark = false;
+      if (mode === 'dark') {
+        isDark = true;
+      } else if (mode === 'system') {
+        isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      }
+      root.classList.toggle('theme-dark', isDark);
+
+      ['system', 'dark', 'light'].forEach(key => {
+        const btn = document.getElementById(`theme-btn-${key}`);
+        if (!btn) return;
+        if (key === mode) {
+          btn.className = 'h-8 px-3.5 font-mono text-[11px] font-semibold tracking-[0.04em] border-r border-line btn-solid transition-colors';
+        } else {
+          btn.className = 'h-8 px-3.5 font-mono text-[11px] font-semibold tracking-[0.04em] border-r border-line bg-surface text-inksec hover:text-ink transition-colors';
+        }
+      });
+    }
+
+    if (window.matchMedia) {
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+        if (launcherSettings.theme === 'system') applyTheme('system');
+      });
+    }
+
+    function applySandboxBadge() {
+      const badge = document.getElementById('sandbox-header-badge');
+      if (badge) {
+        badge.classList.toggle('hidden', !launcherSettings.sandboxMode);
+      }
+    }
+
+    async function updateLauncherSetting(key, value) {
+      launcherSettings[key] = value;
+      await saveSettings();
+
+      if (key === 'theme') {
+        applyTheme(value);
+        showToast(`테마가 '${value.toUpperCase()}' 모드로 변경되었습니다.`);
+      } else if (key === 'updateMode') {
+        updateUpdateModePill();
+        await renderDashboard();
+        showToast(value === 'auto' ? '자동 업데이트 모드로 전환되었습니다.' : '수동 업데이트 모드로 전환되었습니다.');
+      } else if (key === 'notifyUpdates') {
+        await renderDashboard();
+      } else if (key === 'sandboxMode') {
+        applySandboxBadge();
+        showToast(
+          value
+            ? '샌드박스 테스트 모드가 켜졌습니다. 실제 데이터는 변경되지 않습니다.'
+            : '샌드박스 모드가 해제되었습니다. 실제 데이터 저장이 재개됩니다.',
+          value ? 'info' : 'success'
+        );
+      }
+    }
+
+    function updateUpdateModePill() {
+      const pill = document.getElementById('update-mode-pill');
+      if (pill) {
+        pill.innerText = launcherSettings.updateMode === 'manual' ? 'UPDATE: MANUAL' : 'UPDATE: AUTOMATIC';
+      }
+    }
+
+    /* 네이티브 트레이 최소화 & 윈도우 자동 실행 */
+    async function syncTraySettingToRust(enabled) {
+      if (!isTauriEnv()) return false;
+      try {
+        await getTauri().core.invoke('set_keep_in_tray', { enabled: !!enabled });
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    async function toggleKeepInTraySetting(checked) {
+      launcherSettings.keepInTray = !!checked;
+      await saveSettings();
+      const ok = await syncTraySettingToRust(checked);
+      if (ok) {
+        showToast(checked ? '창 닫기 시 트레이 아이콘으로 최소화됩니다.' : '창 닫기 시 프로그램이 완전히 종료됩니다.', 'success');
+      } else {
+        showToast('설정이 저장되었습니다. (트레이 기능은 최신 EXE 빌드 후 작동합니다.)');
+      }
+    }
+
+    async function refreshAutostartStateFromNative() {
+      const tauri = getTauri();
+      if (tauri && tauri.autostart && typeof tauri.autostart.isEnabled === 'function') {
+        try {
+          const enabled = await tauri.autostart.isEnabled();
+          launcherSettings.autostart = !!enabled;
+          const cb = document.getElementById('setting-autostart');
+          if (cb) cb.checked = launcherSettings.autostart;
+        } catch (e) {}
+      }
+    }
+
+    async function toggleAutostartSetting(checked) {
+      const tauri = getTauri();
+      if (!tauri || !tauri.autostart) {
+        launcherSettings.autostart = !!checked;
+        await saveSettings();
+        showToast('설정이 저장되었습니다. (윈도우 자동 실행은 최신 EXE 빌드 후 작동합니다.)');
+        return;
+      }
+
+      try {
+        if (checked) {
+          await tauri.autostart.enable();
+        } else {
+          await tauri.autostart.disable();
+        }
+        const actual = await tauri.autostart.isEnabled();
+        launcherSettings.autostart = !!actual;
+        const cb = document.getElementById('setting-autostart');
+        if (cb) cb.checked = launcherSettings.autostart;
+        await saveSettings();
+        showToast(
+          launcherSettings.autostart
+            ? '윈도우 로그인 시 ZALNET Suite 자동 실행이 등록되었습니다.'
+            : '윈도우 시작 시 자동 실행이 해제되었습니다.',
+          'success'
+        );
+      } catch (e) {
+        showToast(`자동 실행 설정 오류: ${e}`, 'error');
+        const cb = document.getElementById('setting-autostart');
+        if (cb) cb.checked = !checked;
+      }
+    }
+
+    /* 기본 저장 폴더 및 네이티브 FS 래퍼 */
     async function getDefaultDataDir() {
       if (!isTauriEnv()) return 'Browser LocalStorage (Web Preview Mode)';
       const tauri = getTauri();
@@ -439,7 +842,6 @@
       }
     }
 
-    // 현재 활성 저장 폴더 경로 (사용자 지정 공유 폴더 우선)
     async function getDataDir() {
       if (!isTauriEnv()) return 'Browser LocalStorage (Web Preview Mode)';
       const customDir = (window.localStorage.getItem(CUSTOM_DIR_KEY) || '').trim();
@@ -461,7 +863,6 @@
       return await tauri.path.join(dataDir, subPath);
     }
 
-    // 네이티브 Rust 파일 읽기/쓰기 래퍼 (구글 드라이브/외부 경로 권한 제한 없이 동작 + 구버전 EXE 호환)
     async function nativeReadText(fullPath) {
       const tauri = getTauri();
       try {
@@ -514,7 +915,6 @@
       }
     }
 
-    // 저장 경로 사용자 지정 (구글 드라이브 / 원드라이브 / 공유 폴더 연동)
     async function changeDataFolder() {
       if (!isTauriEnv()) {
         showToast('웹 프리뷰 모드에서는 브라우저 저장소를 사용합니다. EXE 설치 후 폴더 지정이 가능합니다.');
@@ -567,6 +967,7 @@
 
         renderQuickTabs();
         await renderDashboard();
+        await syncSettingsViewData();
         const modalPathEl = document.getElementById('modal-data-path');
         if (modalPathEl) modalPathEl.innerText = await getDataDir();
         await renderBackupList();
@@ -594,6 +995,7 @@
       }
       renderQuickTabs();
       await renderDashboard();
+      await syncSettingsViewData();
       const modalPathEl = document.getElementById('modal-data-path');
       if (modalPathEl) modalPathEl.innerText = await getDataDir();
       await renderBackupList();
@@ -601,6 +1003,7 @@
       showToast('기본 저장 경로로 복원되었습니다.', 'success');
     }
 
+    /* GitHub 버전 및 업데이트 감지 */
     function stripVersionFromName(rawName) {
       return (rawName || '').replace(/\s*(?:ver(?:sion)?\.?\s*|v)\d+(?:[._]\d+)+$/i, '').trim();
     }
@@ -660,7 +1063,30 @@
       return clean;
     }
 
-    async function fetchGitHubLastUpdated(rawUrl, bypassCache = false) {
+    function getCachedAppHtml(appId) {
+      try {
+        const raw = window.localStorage.getItem(HTML_CACHE_PREFIX + appId);
+        return raw ? JSON.parse(raw) : null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function saveCachedAppHtml(appId, html, version, commitSha = '') {
+      try {
+        window.localStorage.setItem(
+          HTML_CACHE_PREFIX + appId,
+          JSON.stringify({
+            html,
+            version: version || 'V1.0',
+            commitSha,
+            savedAt: Date.now()
+          })
+        );
+      } catch (e) {}
+    }
+
+    async function fetchGitHubCommitInfo(rawUrl, bypassCache = false) {
       const CACHE_TTL = 15 * 60 * 1000;
       let cacheMap = {};
       try {
@@ -668,7 +1094,7 @@
       } catch (e) {}
 
       if (!bypassCache && cacheMap[rawUrl] && (Date.now() - cacheMap[rawUrl].ts < CACHE_TTL)) {
-        return cacheMap[rawUrl].date;
+        return cacheMap[rawUrl];
       }
 
       try {
@@ -677,19 +1103,22 @@
         const [, owner, repo, branch, encodedPath] = match;
         const apiUrl = `https://api.github.com/repos/${owner}/${repo}/commits?sha=${branch}&path=${encodedPath}&per_page=1`;
         const res = await fetch(apiUrl);
-        if (!res.ok) return cacheMap[rawUrl]?.date || null;
+        if (!res.ok) return cacheMap[rawUrl] || null;
         const commits = await res.json();
-        if (Array.isArray(commits) && commits[0] && commits[0].commit && commits[0].commit.committer && commits[0].commit.committer.date) {
-          const date = new Date(commits[0].commit.committer.date);
-          const formatted = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-          cacheMap[rawUrl] = { date: formatted, ts: Date.now() };
+        if (Array.isArray(commits) && commits[0]) {
+          const sha = commits[0].sha || '';
+          const rawDate = commits[0].commit?.committer?.date;
+          const formatted = rawDate
+            ? new Date(rawDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+            : '';
+          cacheMap[rawUrl] = { date: formatted, sha, ts: Date.now() };
           try {
             window.localStorage.setItem('zalnet_gh_meta_cache', JSON.stringify(cacheMap));
           } catch (e) {}
-          return formatted;
+          return cacheMap[rawUrl];
         }
       } catch (e) {}
-      return cacheMap[rawUrl]?.date || null;
+      return cacheMap[rawUrl] || null;
     }
 
     async function syncAllMetadataFromGitHub(showSpin = false) {
@@ -697,24 +1126,47 @@
       if (showSpin && btn) btn.classList.add('rotate-180');
 
       let updatedAny = false;
+      let foundNewUpdates = 0;
+
       await Promise.all(appsList.map(async (app) => {
         try {
+          const cachedSnap = getCachedAppHtml(app.id);
+          const commitInfo = await fetchGitHubCommitInfo(app.rawUrl, showSpin);
+          if (commitInfo && commitInfo.date && app.lastUpdated !== commitInfo.date) {
+            app.lastUpdated = commitInfo.date;
+            updatedAny = true;
+          }
+
+          // 자동 모드이거나 수동 확인 버튼(showSpin) 또는 캐시가 없을 때 원격 HTML 확인
           const res = await fetch(`${app.rawUrl}?t=${Date.now()}`);
           if (res.ok) {
-            const html = await res.text();
-            const detectedVer = detectVersionFromHtml(html, app.rawUrl);
-            if (detectedVer && app.version !== detectedVer) {
-              app.version = detectedVer;
-              updatedAny = true;
-            } else if (!detectedVer && (app.version === 'CHECKING...' || app.version === 'AUTO')) {
-              app.version = 'V1.0';
-              updatedAny = true;
+            const remoteHtml = await res.text();
+            const detectedVer = detectVersionFromHtml(remoteHtml, app.rawUrl) || (app.version !== 'CHECKING...' && app.version !== 'AUTO' ? app.version : 'V1.0');
+
+            if (launcherSettings.updateMode === 'auto') {
+              if (app.version !== detectedVer) {
+                app.version = detectedVer;
+                updatedAny = true;
+              }
+              saveCachedAppHtml(app.id, remoteHtml, detectedVer, commitInfo?.sha || '');
+              appUpdateAvailable[app.id] = false;
+            } else {
+              // 수동 업데이트 모드: 캐시된 코드와 원격 코드가 다르면 업데이트 알림 플래그 활성화
+              if (!cachedSnap) {
+                saveCachedAppHtml(app.id, remoteHtml, detectedVer, commitInfo?.sha || '');
+                app.version = detectedVer;
+                updatedAny = true;
+                appUpdateAvailable[app.id] = false;
+              } else {
+                const isDifferent = cachedSnap.html.trim() !== remoteHtml.trim();
+                appUpdateAvailable[app.id] = isDifferent;
+                if (isDifferent) foundNewUpdates++;
+                if (app.version === 'CHECKING...' || app.version === 'AUTO') {
+                  app.version = cachedSnap.version || detectedVer;
+                  updatedAny = true;
+                }
+              }
             }
-          }
-          const lastDate = await fetchGitHubLastUpdated(app.rawUrl, showSpin);
-          if (lastDate && app.lastUpdated !== lastDate) {
-            app.lastUpdated = lastDate;
-            updatedAny = true;
           }
         } catch (e) {
           if (app.version === 'CHECKING...' || app.version === 'AUTO') {
@@ -728,12 +1180,31 @@
       }
       await renderDashboard();
       if (showSpin) {
-        showToast('GitHub 최신 버전 및 업데이트 정보를 동기화했습니다.');
+        if (launcherSettings.updateMode === 'manual' && foundNewUpdates > 0) {
+          showToast(`${foundNewUpdates}개 프로그램의 새 버전이 감지되었습니다. 카드의 UPDATE 버튼을 눌러 반영하세요.`, 'info');
+        } else {
+          showToast('GitHub 최신 버전 및 업데이트 정보를 동기화했습니다.', 'success');
+        }
         if (btn) setTimeout(() => btn.classList.remove('rotate-180'), 300);
       }
     }
 
-    // 로컬 캐시에서 즉시 동기 로드 (첫 화면 0ms 렌더링 보장)
+    function normalizeAppsMetadata(list) {
+      const existingIds = new Set(list.map(a => a.id));
+      for (const defApp of DEFAULT_APPS) {
+        if (!existingIds.has(defApp.id)) {
+          list.push(JSON.parse(JSON.stringify(defApp)));
+        }
+      }
+      list.forEach(app => {
+        app.name = stripVersionFromName(app.name) || app.name;
+        if (app.id === 'margin' && app.name === '마진 관리') {
+          app.name = '마진 시뮬레이터';
+        }
+      });
+      return list;
+    }
+
     function loadLauncherConfigSync() {
       let loadedApps = null;
       try {
@@ -743,23 +1214,25 @@
           if (Array.isArray(parsed.apps) && parsed.apps.length > 0) {
             loadedApps = parsed.apps;
           }
+          if (parsed.settings && typeof parsed.settings === 'object') {
+            launcherSettings = {
+              ...launcherSettings,
+              ...parsed.settings,
+              quickLinks: Array.isArray(parsed.settings.quickLinks) && parsed.settings.quickLinks.length > 0
+                ? parsed.settings.quickLinks
+                : launcherSettings.quickLinks
+            };
+          }
         }
       } catch (e) {}
 
       if (loadedApps) {
-        const existingIds = new Set(loadedApps.map(a => a.id));
-        for (const defApp of DEFAULT_APPS) {
-          if (!existingIds.has(defApp.id)) {
-            loadedApps.push(JSON.parse(JSON.stringify(defApp)));
-          }
-        }
-        loadedApps.forEach(app => {
-          app.name = stripVersionFromName(app.name) || app.name;
-        });
-        appsList = loadedApps;
+        appsList = normalizeAppsMetadata(loadedApps);
       } else {
         appsList = JSON.parse(JSON.stringify(DEFAULT_APPS));
       }
+      applyTheme(launcherSettings.theme);
+      applySandboxBadge();
     }
 
     async function loadLauncherConfig() {
@@ -774,26 +1247,28 @@
           if (Array.isArray(parsed.apps) && parsed.apps.length > 0) {
             diskApps = parsed.apps;
           }
+          if (parsed.settings && typeof parsed.settings === 'object') {
+            launcherSettings = {
+              ...launcherSettings,
+              ...parsed.settings,
+              quickLinks: Array.isArray(parsed.settings.quickLinks) && parsed.settings.quickLinks.length > 0
+                ? parsed.settings.quickLinks
+                : launcherSettings.quickLinks
+            };
+          }
         } catch (e) {}
       }
 
       if (diskApps) {
-        const existingIds = new Set(diskApps.map(a => a.id));
-        for (const defApp of DEFAULT_APPS) {
-          if (!existingIds.has(defApp.id)) {
-            diskApps.push(JSON.parse(JSON.stringify(defApp)));
-          }
-        }
-        diskApps.forEach(app => {
-          app.name = stripVersionFromName(app.name) || app.name;
-        });
-        appsList = diskApps;
+        appsList = normalizeAppsMetadata(diskApps);
       }
+      applyTheme(launcherSettings.theme);
+      applySandboxBadge();
       await saveLauncherConfig();
     }
 
     async function saveLauncherConfig() {
-      const jsonStr = JSON.stringify({ apps: appsList }, null, 2);
+      const jsonStr = JSON.stringify({ apps: appsList, settings: launcherSettings }, null, 2);
       try {
         window.localStorage.setItem('zalnet_launcher_config', jsonStr);
       } catch (e) {}
@@ -831,6 +1306,7 @@
     }
 
     async function writeAppStorageNow(appId) {
+      if (launcherSettings.sandboxMode) return; // 샌드박스 모드에서는 실제 디스크 저장 차단
       const jsonStr = JSON.stringify(storageCache[appId] || {}, null, 2);
       try {
         window.localStorage.setItem(`zalnet_app_data_${appId}`, jsonStr);
@@ -847,6 +1323,7 @@
     }
 
     function syncToDisk(appId) {
+      if (launcherSettings.sandboxMode) return;
       clearTimeout(saveTimers[appId]);
       saveTimers[appId] = setTimeout(() => {
         delete saveTimers[appId];
@@ -871,30 +1348,36 @@
       if (document.visibilityState === 'hidden') flushAllPendingSavesAsync();
     });
 
-    // iframe 메시지 수신 (데이터 동기화, 단축키, 외부 브라우저 링크 열기)
+    // iframe 메시지 수신
     window.addEventListener('message', async (event) => {
       const msg = event.data;
       if (!msg) return;
       if (msg.type === 'SYNC_LOCAL_STORAGE') {
-        storageCache[msg.appId] = msg.data;
-        syncToDisk(msg.appId);
+        if (launcherSettings.sandboxMode) {
+          sandboxCache[msg.appId] = msg.data;
+        } else {
+          storageCache[msg.appId] = msg.data;
+          syncToDisk(msg.appId);
+        }
       } else if (msg.type === 'LAUNCHER_SHORTCUT') {
         handleLauncherShortcut(msg.key, msg.ctrlOrMeta);
       } else if (msg.type === 'OPEN_EXTERNAL_URL' && msg.url) {
-        if (isTauriEnv()) {
-          try {
-            await getTauri().core.invoke('open_external_url', { url: msg.url });
-            showToast('기본 웹 브라우저로 외부 링크를 열었습니다.');
-          } catch (e) {
-            window.open(msg.url, '_blank', 'noopener,noreferrer');
-          }
-        } else {
-          window.open(msg.url, '_blank', 'noopener,noreferrer');
-        }
+        openExternalUrl(msg.url);
       }
     });
 
-    // iframe 주입 브릿지 (localStorage 가로채기 + 단축키 + 외부 http 링크 기본 브라우저 전환)
+    async function openExternalUrl(url) {
+      if (!url) return;
+      if (isTauriEnv()) {
+        try {
+          await getTauri().core.invoke('open_external_url', { url });
+          showToast('기본 웹 브라우저로 외부 링크를 열었습니다.');
+          return;
+        } catch (e) {}
+      }
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+
     function createBridgeScript(appId, initialData) {
       const serialized = JSON.stringify(initialData).replace(/<\/script>/gi, '<\\/script>');
       return [
@@ -956,21 +1439,42 @@
         return;
       }
 
-      showToast(`[${app.name}] GitHub에서 최신 코드를 불러오는 중...`);
-
       try {
         await preloadAppStorage(appId);
-        const response = await fetch(`${app.rawUrl}?t=${Date.now()}`);
-        if (!response.ok) throw new Error(`HTTP ${response.status} (저장소 Public 설정 확인 필요)`);
-        let htmlCode = await response.text();
+        const initialStore = launcherSettings.sandboxMode
+          ? JSON.parse(JSON.stringify(storageCache[appId] || {}))
+          : (storageCache[appId] || {});
 
-        const detectedVer = detectVersionFromHtml(htmlCode, app.rawUrl);
-        if (detectedVer && app.version !== detectedVer) {
-          app.version = detectedVer;
-          await saveLauncherConfig();
+        let htmlCode = null;
+        const cachedSnap = getCachedAppHtml(appId);
+        const shouldFetchRemote = forceReload || launcherSettings.updateMode === 'auto' || !cachedSnap;
+
+        if (shouldFetchRemote) {
+          showToast(`[${app.name}] GitHub에서 최신 코드를 불러오는 중...`);
+          try {
+            const response = await fetch(`${app.rawUrl}?t=${Date.now()}`);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            htmlCode = await response.text();
+            const detectedVer = detectVersionFromHtml(htmlCode, app.rawUrl) || app.version || 'V1.0';
+            app.version = detectedVer;
+            saveCachedAppHtml(appId, htmlCode, detectedVer);
+            appUpdateAvailable[appId] = false;
+            await saveLauncherConfig();
+          } catch (fetchErr) {
+            if (cachedSnap && cachedSnap.html) {
+              htmlCode = cachedSnap.html;
+              showToast(`[${app.name}] 오프라인 캐시 버전으로 실행합니다.`);
+            } else {
+              throw fetchErr;
+            }
+          }
+        } else {
+          // 수동 업데이트 모드 + 로컬 스냅샷 존재: 캐시 버전 즉시 실행
+          htmlCode = cachedSnap.html;
+          showToast(`[${app.name}] 저장된 버전(${cachedSnap.version || app.version})으로 실행합니다.`);
         }
 
-        const bridgeTag = createBridgeScript(appId, storageCache[appId] || {});
+        const bridgeTag = createBridgeScript(appId, initialStore);
         if (/<head[^>]*>/i.test(htmlCode)) {
           htmlCode = htmlCode.replace(/<head[^>]*>/i, function(m) {
             return m + '\n' + bridgeTag;
@@ -992,7 +1496,9 @@
 
         runningAppIds.add(appId);
         activateView(appId);
-        showToast(`[${app.name}] 실행 완료`, 'success');
+        if (shouldFetchRemote) {
+          showToast(`[${app.name}] 실행 완료`, 'success');
+        }
       } catch (err) {
         showToast(`로드 실패 (${app.name}): ${err.message}`, 'error');
       }
@@ -1029,40 +1535,137 @@
     function activateView(viewId) {
       activeViewId = viewId;
       const dashboard = document.getElementById('dashboard-view');
+      const settingsView = document.getElementById('settings-view');
       const closeCurrentBtn = document.getElementById('btn-close-current-app');
       const reloadCurrentBtn = document.getElementById('btn-reload-current-app');
+      const navSettingsBtn = document.getElementById('btn-nav-settings');
+
+      if (navSettingsBtn) {
+        navSettingsBtn.classList.toggle('btn-solid', viewId === 'settings');
+      }
 
       if (viewId === 'dashboard') {
         dashboard.classList.remove('hidden');
+        settingsView.classList.add('hidden');
         document.querySelectorAll('.app-frame').forEach(f => f.classList.remove('active'));
-        if (closeCurrentBtn) {
-          closeCurrentBtn.classList.add('hidden');
-          closeCurrentBtn.classList.remove('flex');
-        }
-        if (reloadCurrentBtn) {
-          reloadCurrentBtn.classList.add('hidden');
-          reloadCurrentBtn.classList.remove('flex');
-        }
+        if (closeCurrentBtn) { closeCurrentBtn.classList.add('hidden'); closeCurrentBtn.classList.remove('flex'); }
+        if (reloadCurrentBtn) { reloadCurrentBtn.classList.add('hidden'); reloadCurrentBtn.classList.remove('flex'); }
         renderDashboard();
+      } else if (viewId === 'settings') {
+        dashboard.classList.add('hidden');
+        settingsView.classList.remove('hidden');
+        document.querySelectorAll('.app-frame').forEach(f => f.classList.remove('active'));
+        if (closeCurrentBtn) { closeCurrentBtn.classList.add('hidden'); closeCurrentBtn.classList.remove('flex'); }
+        if (reloadCurrentBtn) { reloadCurrentBtn.classList.add('hidden'); reloadCurrentBtn.classList.remove('flex'); }
+        syncSettingsViewData();
       } else {
         dashboard.classList.add('hidden');
+        settingsView.classList.add('hidden');
         document.querySelectorAll('.app-frame').forEach(f => {
           f.classList.toggle('active', f.id === `frame-${viewId}`);
         });
-        if (closeCurrentBtn) {
-          closeCurrentBtn.classList.remove('hidden');
-          closeCurrentBtn.classList.add('flex');
-        }
-        if (reloadCurrentBtn) {
-          reloadCurrentBtn.classList.remove('hidden');
-          reloadCurrentBtn.classList.add('flex');
-        }
+        if (closeCurrentBtn) { closeCurrentBtn.classList.remove('hidden'); closeCurrentBtn.classList.add('flex'); }
+        if (reloadCurrentBtn) { reloadCurrentBtn.classList.remove('hidden'); reloadCurrentBtn.classList.add('flex'); }
       }
       renderQuickTabs();
     }
 
     function showDashboard() {
       activateView('dashboard');
+    }
+
+    function showSettingsView() {
+      activateView('settings');
+    }
+
+    async function syncSettingsViewData() {
+      const updateModeSel = document.getElementById('setting-update-mode');
+      if (updateModeSel) updateModeSel.value = launcherSettings.updateMode || 'auto';
+
+      const notifyCb = document.getElementById('setting-notify-update');
+      if (notifyCb) notifyCb.checked = launcherSettings.notifyUpdates !== false;
+
+      const sandboxCb = document.getElementById('setting-sandbox-mode');
+      if (sandboxCb) sandboxCb.checked = !!launcherSettings.sandboxMode;
+
+      const trayCb = document.getElementById('setting-keep-tray');
+      if (trayCb) trayCb.checked = launcherSettings.keepInTray !== false;
+
+      const autoCb = document.getElementById('setting-autostart');
+      if (autoCb) autoCb.checked = !!launcherSettings.autostart;
+
+      applyTheme(launcherSettings.theme);
+      renderQuickLinksButtons();
+
+      const pathBox = document.getElementById('settings-data-path');
+      if (pathBox) pathBox.innerText = await getDataDir();
+
+      const noteBox = document.getElementById('native-status-note');
+      if (noteBox) {
+        if (isTauriEnv()) {
+          const hasAutostart = !!(getTauri() && getTauri().autostart);
+          noteBox.innerText = hasAutostart
+            ? 'NATIVE DESKTOP MODE: 시스템 트레이 및 윈도우 시작 자동 실행 모듈이 활성화되어 있습니다.'
+            : 'NATIVE DESKTOP MODE: 트레이 및 자동 실행 기능을 활성화하려면 최신 빌드 가이드를 적용해 주세요.';
+        } else {
+          noteBox.innerText = 'WEB PREVIEW MODE: 설치형 EXE 환경에서 실행 시 트레이 최소화 및 자동 실행이 작동합니다.';
+        }
+      }
+    }
+
+    /* 빠른 업무 바로가기 링크 렌더링 및 편집 */
+    function renderQuickLinksButtons() {
+      const container = document.getElementById('quick-links-buttons');
+      if (!container) return;
+      container.innerHTML = '';
+
+      (launcherSettings.quickLinks || []).forEach((link, idx) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = idx === 0
+          ? 'h-8 px-3.5 btn-solid border font-mono text-[11px] font-semibold tracking-[0.04em] transition-colors'
+          : 'h-8 px-3.5 bg-surface border border-line text-ink font-mono text-[11px] font-semibold tracking-[0.04em] hover:bg-subtle transition-colors';
+        btn.innerText = link.label;
+        btn.onclick = () => openExternalUrl(link.url);
+        container.appendChild(btn);
+      });
+    }
+
+    function openQuickLinksEditor() {
+      const list = document.getElementById('quick-links-editor-list');
+      list.innerHTML = '';
+      (launcherSettings.quickLinks || []).forEach(link => addQuickLinkRow(link.label, link.url));
+      openModal('links-modal');
+    }
+
+    function addQuickLinkRow(label = '', url = '') {
+      const list = document.getElementById('quick-links-editor-list');
+      const row = document.createElement('div');
+      row.className = 'flex gap-1.5 items-center quick-link-row';
+      row.innerHTML = `
+        <input type="text" placeholder="버튼명 (예: COUPANG WING)" value="${label}" class="w-36 h-8 px-2 border border-line bg-surface text-ink font-mono text-xs outline-none focus:border-ink" />
+        <input type="text" placeholder="https://..." value="${url}" class="flex-1 h-8 px-2 border border-line bg-surface text-ink font-mono text-xs outline-none focus:border-ink" />
+        <button type="button" onclick="this.parentElement.remove()" class="h-8 w-8 border border-line bg-surface text-red-600 hover:bg-red-500/10">✕</button>
+      `;
+      list.appendChild(row);
+    }
+
+    async function saveQuickLinksEditor() {
+      const rows = Array.from(document.querySelectorAll('#quick-links-editor-list .quick-link-row'));
+      const nextLinks = [];
+      for (const r of rows) {
+        const inputs = r.querySelectorAll('input');
+        const label = inputs[0].value.trim();
+        const url = inputs[1].value.trim();
+        if (label && url) {
+          nextLinks.push({ label, url });
+        }
+      }
+      launcherSettings.quickLinks = nextLinks.length > 0 ? nextLinks : JSON.parse(JSON.stringify(DEFAULT_QUICK_LINKS));
+      await saveSettings();
+      renderQuickLinksButtons();
+      closeModal('links-modal');
+      showToast('업무 바로가기 링크가 저장되었습니다.', 'success');
     }
 
     function renderQuickTabs() {
@@ -1074,7 +1677,7 @@
       homeBtn.type = 'button';
       homeBtn.className = `h-[30px] px-3 text-xs font-mono font-semibold border transition-colors shrink-0 ${
         activeViewId === 'dashboard'
-          ? 'bg-ink text-white border-ink'
+          ? 'btn-solid'
           : 'bg-transparent text-inksec border-transparent hover:bg-subtle hover:text-ink'
       }`;
       homeBtn.innerText = 'APPS';
@@ -1087,7 +1690,7 @@
         const tabWrap = document.createElement('div');
         tabWrap.className = `h-[30px] flex items-center border transition-colors shrink-0 ${
           isActive
-            ? 'bg-ink text-white border-ink font-semibold'
+            ? 'btn-solid font-semibold'
             : 'bg-transparent text-inksec border-transparent hover:bg-subtle hover:text-ink'
         }`;
 
@@ -1102,7 +1705,7 @@
           const closeTabBtn = document.createElement('button');
           closeTabBtn.type = 'button';
           closeTabBtn.title = `${app.name} 닫기`;
-          closeTabBtn.className = `h-full px-1.5 text-[11px] opacity-65 hover:opacity-100 ${isActive ? 'hover:bg-white/20' : 'hover:bg-black/10'}`;
+          closeTabBtn.className = `h-full px-1.5 text-[11px] opacity-65 hover:opacity-100`;
           closeTabBtn.innerText = '×';
           closeTabBtn.onclick = (e) => closeRunningApp(app.id, e);
           tabWrap.appendChild(closeTabBtn);
@@ -1125,6 +1728,7 @@
       for (const app of filtered) {
         preloadAppStorageSync(app.id);
         const isRunning = runningAppIds.has(app.id);
+        const hasNewUpdate = launcherSettings.notifyUpdates !== false && !!appUpdateAvailable[app.id];
         const dataObj = storageCache[app.id] || {};
         const dataKeys = Object.keys(dataObj).length;
         const dataBytes = new Blob([JSON.stringify(dataObj)]).size;
@@ -1134,13 +1738,14 @@
         const shortcutHint = appIndex >= 0 && appIndex < 9 ? `Ctrl+${appIndex + 1}` : '';
 
         const card = document.createElement('div');
-        card.className = 'bg-surface border border-line hover:border-[#888884] transition-colors flex flex-col';
+        card.className = 'bg-surface border border-line hover:border-inkmuted transition-colors flex flex-col';
         card.innerHTML = `
           <div class="flex justify-between items-center px-3.5 py-2 border-b border-linelight font-mono text-[10px] text-inksec">
             <div class="flex items-center gap-2">
               <span class="font-semibold text-ink">${app.version || 'V1.0'}</span>
               ${shortcutHint ? `<span class="text-inkmuted">[${shortcutHint}]</span>` : ''}
               ${isRunning ? `<span class="text-green-600 font-bold flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-green-600 inline-block"></span>RUNNING</span>` : ''}
+              ${hasNewUpdate ? `<span class="bg-artblue text-white px-1.5 py-0.5 text-[9px] font-bold">NEW UPDATE</span>` : ''}
             </div>
             <div class="flex items-center gap-1.5">
               ${canReorder ? `
@@ -1152,7 +1757,7 @@
           </div>
           <div class="p-4 flex-1 flex flex-col gap-2.5">
             <div class="flex items-start gap-3">
-              <div class="w-12 h-12 border border-line bg-[#f5f5f2] flex items-center justify-center shrink-0">
+              <div class="w-12 h-12 border border-line flex items-center justify-center shrink-0 text-ink" style="background: var(--icon-box-bg);">
                 ${SVG_ICONS[app.iconType] || SVG_ICONS.custom}
               </div>
               <div class="flex-1 min-w-0">
@@ -1172,18 +1777,23 @@
           <div class="px-3.5 pb-3.5 flex gap-1.5">
             <button type="button" onclick="openOrSwitchApp('${app.id}', false)" class="flex-1 h-8 font-mono text-[11px] font-semibold tracking-[0.08em] border transition-colors ${
               isRunning
-                ? 'bg-ink text-white border-ink hover:bg-[#333333]'
-                : 'bg-surface text-ink border-[#bcbcb8] hover:bg-ink hover:text-white hover:border-ink'
+                ? 'btn-solid'
+                : 'bg-surface text-ink border-line hover:bg-subtle'
             }">
               ${isRunning ? 'RESUME' : 'OPEN'}
             </button>
+            ${hasNewUpdate ? `
+              <button type="button" onclick="openOrSwitchApp('${app.id}', true)" title="GitHub에서 새 버전을 내려받아 업데이트" class="h-8 px-2.5 bg-artblue text-white border border-artblue font-mono text-[11px] font-semibold hover:opacity-90 transition-opacity">
+                UPDATE
+              </button>
+            ` : ''}
             ${isRunning ? `
-              <button type="button" onclick="closeRunningApp('${app.id}', event)" title="실행 중인 프로그램 닫기" class="h-8 px-2.5 bg-red-50 border border-red-300 text-red-700 font-mono text-[11px] font-semibold hover:bg-red-600 hover:text-white hover:border-red-600 transition-colors">
+              <button type="button" onclick="closeRunningApp('${app.id}', event)" title="실행 중인 프로그램 닫기" class="h-8 px-2.5 bg-red-500/10 border border-red-400/50 text-red-600 font-mono text-[11px] font-semibold hover:bg-red-600 hover:text-white hover:border-red-600 transition-colors">
                 CLOSE
               </button>
             ` : ''}
-            <button type="button" onclick="openDataFolder()" title="저장 폴더 열기" class="w-8 h-8 bg-surface border border-[#bcbcb8] hover:bg-subtle flex items-center justify-center text-xs">📁</button>
-            <button type="button" onclick="openAppEditModal('${app.id}')" title="프로그램 설정 및 이름 변경" class="w-8 h-8 bg-surface border border-[#bcbcb8] hover:bg-subtle flex items-center justify-center text-xs">•••</button>
+            <button type="button" onclick="openDataFolder()" title="저장 폴더 열기" class="w-8 h-8 bg-surface border border-line hover:bg-subtle flex items-center justify-center text-xs">📁</button>
+            <button type="button" onclick="openAppEditModal('${app.id}')" title="프로그램 설정 및 이름 변경" class="w-8 h-8 bg-surface border border-line hover:bg-subtle flex items-center justify-center text-xs">•••</button>
           </div>
         `;
         grid.appendChild(card);
@@ -1200,6 +1810,7 @@
       const runningEl = document.getElementById('running-count');
       if (totalEl) totalEl.innerText = appsList.length;
       if (runningEl) runningEl.innerText = runningAppIds.size;
+      updateUpdateModePill();
 
       let filtered = appsList.filter(app => {
         if (currentFilter === 'running' && !runningAppIds.has(app.id)) return false;
@@ -1211,10 +1822,8 @@
         filtered = [...filtered].sort((a, b) => a.name.localeCompare(b.name, 'ko'));
       }
 
-      // 1단계: 대기 없이 즉시 카드 렌더링
       renderAppCardsDOM(filtered, sortBy, keyword);
 
-      // 2단계: 비동기 스토리지 경로 및 디스크 JSON 용량 반영
       try {
         const dataDir = await getDataDir();
         const hasCustomDir = !!(window.localStorage.getItem(CUSTOM_DIR_KEY) || '').trim();
@@ -1229,9 +1838,7 @@
           await preloadAppStorage(app.id);
         }
         renderAppCardsDOM(filtered, sortBy, keyword);
-      } catch (e) {
-        console.warn('비동기 대시보드 메타 갱신 경고:', e);
-      }
+      } catch (e) {}
     }
 
     async function moveAppOrder(appId, delta) {
@@ -1250,10 +1857,10 @@
       const tabAll = document.getElementById('tab-all');
       const tabRun = document.getElementById('tab-running');
       if (filter === 'all') {
-        tabAll.className = 'h-8 px-3.5 font-mono text-[11px] font-semibold border border-ink bg-ink text-white tracking-[0.04em]';
+        tabAll.className = 'h-8 px-3.5 font-mono text-[11px] font-semibold border btn-solid tracking-[0.04em]';
         tabRun.className = 'h-8 px-3.5 font-mono text-[11px] font-semibold border border-line bg-surface text-inksec hover:text-ink tracking-[0.04em]';
       } else {
-        tabRun.className = 'h-8 px-3.5 font-mono text-[11px] font-semibold border border-ink bg-ink text-white tracking-[0.04em]';
+        tabRun.className = 'h-8 px-3.5 font-mono text-[11px] font-semibold border btn-solid tracking-[0.04em]';
         tabAll.className = 'h-8 px-3.5 font-mono text-[11px] font-semibold border border-line bg-surface text-inksec hover:text-ink tracking-[0.04em]';
       }
       renderDashboard();
@@ -1459,7 +2066,7 @@
       await openOrSwitchApp(id, true);
     }
 
-    // 백업 데이터 관리
+    /* 백업 데이터 관리 */
     async function getBackupDir() {
       return await getFilePath('backups');
     }
@@ -1509,9 +2116,7 @@
             window.localStorage.setItem('zalnet_snapshots', JSON.stringify(existing));
           }
         }
-      } catch (e) {
-        console.warn('자동 일일 백업 경고:', e);
-      }
+      } catch (e) {}
     }
 
     async function buildBackupPayload() {
@@ -1699,14 +2304,14 @@
           <div class="flex justify-between items-center gap-2">
             <div class="min-w-0">
               <div class="flex items-center gap-1.5">
-                <span class="font-mono text-[9px] px-1.5 py-0.5 ${isAuto ? 'bg-artbluebg text-artblue border border-[#cfe0fc]' : 'bg-subtle text-inksec border border-linelight'} font-bold">
+                <span class="font-mono text-[9px] px-1.5 py-0.5 ${isAuto ? 'bg-artbluebg text-artblue border border-artblue/30' : 'bg-subtle text-inksec border border-linelight'} font-bold">
                   ${isAuto ? 'AUTO DAILY' : 'MANUAL'}
                 </span>
                 <span class="font-mono text-xs font-semibold text-ink truncate">${fileName}</span>
               </div>
             </div>
             <div class="flex gap-1.5 shrink-0">
-              <button type="button" onclick="restoreSnapshot('${fileName}')" class="h-7 px-2 bg-ink text-white text-[11px] hover:bg-[#333333]">전체복원</button>
+              <button type="button" onclick="restoreSnapshot('${fileName}')" class="h-7 px-2 btn-solid text-[11px]">전체복원</button>
               <button type="button" onclick="toggleSelectivePanel('${fileName}', '${panelId}')" class="h-7 px-2 bg-surface border border-line text-ink text-[11px] hover:bg-subtle">선택복원</button>
               <button type="button" onclick="deleteSnapshot('${fileName}')" class="h-7 px-2 bg-surface border border-line text-ink text-[11px] hover:bg-subtle">삭제</button>
             </div>
@@ -1763,7 +2368,7 @@
             <span class="font-medium text-ink">${app.name}</span>
             <span class="font-mono text-[10px] text-inkmuted ml-1.5">(${count} 항목 저장됨)</span>
           </div>
-          <button type="button" onclick="resetSingleAppData('${app.id}')" ${count === 0 ? 'disabled' : ''} class="h-6 px-2 border border-red-300 text-red-600 text-[11px] hover:bg-red-600 hover:text-white disabled:opacity-35 disabled:pointer-events-none transition-colors">
+          <button type="button" onclick="resetSingleAppData('${app.id}')" ${count === 0 ? 'disabled' : ''} class="h-6 px-2 border border-red-400 text-red-600 text-[11px] hover:bg-red-600 hover:text-white disabled:opacity-35 disabled:pointer-events-none transition-colors">
             초기화
           </button>
         `;
@@ -1791,19 +2396,20 @@
       showToast(`[${app.name}] 데이터가 초기화되었습니다.`);
     }
 
-    // 즉시 초기화 + 비동기 디스크/네트워크 동기화 (document.write 부트스트랩 로더 완벽 대응)
+    /* 즉시 부트스트랩 실행 */
     async function bootZalnetSuite() {
       if (isSuiteBooted) return;
       isSuiteBooted = true;
 
-      // 1단계: 대기 없이 즉시 카드 6개 화면 렌더링
+      loadSettingsSync();
       loadLauncherConfigSync();
       renderQuickTabs();
       renderDashboard();
 
-      // 2단계: 하드디스크 설정/데이터 동기화 및 백업/GitHub 메타 갱신
       try {
         await loadLauncherConfig();
+        await syncTraySettingToRust(launcherSettings.keepInTray !== false);
+        await refreshAutostartStateFromNative();
         await runAutoDailyBackup();
         renderQuickTabs();
         await renderDashboard();
@@ -1812,12 +2418,15 @@
         console.warn('초기 디스크/네트워크 동기화 경고:', e);
       }
 
-      // 3단계: Tauri 창 닫기(X) 시 대기 중인 저장 완료 및 실행 중인 앱 종료 확인
       if (window.__TAURI__ && window.__TAURI__.window) {
         try {
           const appWindow = window.__TAURI__.window.getCurrentWindow();
           await appWindow.onCloseRequested(async (event) => {
             await flushAllPendingSavesAsync();
+            // 트레이 최소화가 켜져 있으면 Rust 쪽에서 창을 숨기므로 종료 확인 팝업을 띄우지 않음
+            if (launcherSettings.keepInTray !== false) {
+              return;
+            }
             if (runningAppIds.size > 0) {
               event.preventDefault();
               const ok = await showConfirm(
@@ -1830,9 +2439,7 @@
               }
             }
           });
-        } catch (e) {
-          console.warn('창 종료 이벤트 등록 경고:', e);
-        }
+        } catch (e) {}
       }
     }
 
