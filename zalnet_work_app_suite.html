@@ -73,7 +73,7 @@
   <header id="top-header" class="min-h-[48px] bg-surface border-b border-line flex flex-wrap items-center justify-between px-3 sm:px-5 py-1.5 gap-2 shrink-0 z-30">
     <div class="flex items-center gap-2.5 overflow-x-auto max-w-full">
       <!-- 브랜드 로고 -->
-      <button type="button" onclick="showDashboard()" title="런처 홈(APPS)으로 이동" class="font-black text-[15px] tracking-[0.08em] text-ink flex items-center gap-2 shrink-0 hover:opacity-75 transition-opacity">
+      <button type="button" onclick="showDashboard()" title="런처 홈(APPS)으로 이동 (Ctrl+0)" class="font-black text-[15px] tracking-[0.08em] text-ink flex items-center gap-2 shrink-0 hover:opacity-75 transition-opacity">
         <span class="inline-block w-2.5 h-2.5 bg-ink"></span>
         <span>ZALNET</span>
       </button>
@@ -86,15 +86,19 @@
 
     <!-- 우측 유틸리티 액션 버튼 -->
     <div class="flex items-center gap-1.5 shrink-0">
+      <button type="button" id="btn-reload-current-app" onclick="reloadCurrentActiveApp()" title="현재 실행 중인 앱을 GitHub 최신 코드로 새로고침" class="hidden h-[30px] px-2.5 bg-artbluebg border border-[#bfd5fb] text-artblue text-xs font-medium hover:bg-artblue hover:text-white hover:border-artblue transition-colors items-center gap-1 rounded-none">
+        <span>↻</span>
+        <span>새로고침</span>
+      </button>
       <button type="button" id="btn-close-current-app" onclick="closeRunningApp(activeViewId)" title="현재 실행 중인 프로그램 닫기" class="hidden h-[30px] px-2.5 bg-red-50 border border-red-300 text-red-700 text-xs font-medium hover:bg-red-600 hover:text-white hover:border-red-600 transition-colors items-center gap-1 rounded-none">
         <span>✕</span>
-        <span>현재 앱 닫기</span>
+        <span>앱 닫기</span>
       </button>
       <button type="button" onclick="openDataFolder()" title="저장 폴더 열기 및 경로 확인" class="h-[30px] px-2.5 bg-surface border border-line text-ink text-xs hover:bg-subtle hover:border-[#a8a8a4] transition-colors flex items-center gap-1.5 rounded-none">
         <span>📁</span>
         <span class="hidden sm:inline">저장폴더</span>
       </button>
-      <button type="button" onclick="openBackupModal()" title="백업 데이터 생성 및 복원" class="h-[30px] px-2.5 bg-surface border border-line text-ink text-xs hover:bg-subtle hover:border-[#a8a8a4] transition-colors flex items-center gap-1.5 rounded-none">
+      <button type="button" onclick="openBackupModal()" title="백업 데이터 생성, 선택 복원 및 초기화" class="h-[30px] px-2.5 bg-surface border border-line text-ink text-xs hover:bg-subtle hover:border-[#a8a8a4] transition-colors flex items-center gap-1.5 rounded-none">
         <span>💾</span>
         <span class="hidden sm:inline">백업관리</span>
       </button>
@@ -122,7 +126,7 @@
           <button type="button" id="tab-running" onclick="setFilter('running')" class="h-8 px-3.5 font-mono text-[11px] font-semibold border border-line bg-surface text-inksec hover:text-ink tracking-[0.04em] transition-colors">
             RUNNING (<span id="running-count">0</span>)
           </button>
-          <button type="button" id="btn-sync-all" onclick="syncAllMetadataFromGitHub(true)" title="GitHub에서 최신 버전 및 수정일 동기화" class="w-8 h-8 rounded-full border border-line bg-surface hover:bg-subtle flex items-center justify-center text-sm transition-transform duration-300">
+          <button type="button" id="btn-sync-all" onclick="syncAllMetadataFromGitHub(true)" title="GitHub에서 최신 버전 및 수정일 강제 동기화" class="w-8 h-8 rounded-full border border-line bg-surface hover:bg-subtle flex items-center justify-center text-sm transition-transform duration-300">
             ↻
           </button>
         </div>
@@ -130,7 +134,7 @@
         <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           <span class="font-mono text-[10px] text-inkmuted hidden md:inline">SORT</span>
           <select id="sort-select" onchange="renderDashboard()" class="h-8 px-2.5 border border-line bg-surface text-xs text-ink outline-none focus:border-ink">
-            <option value="custom">기본 순서</option>
+            <option value="custom">사용자 지정 순서</option>
             <option value="name">이름순 (가나다/A-Z)</option>
           </select>
           <input type="text" id="search-input" placeholder="Search apps..." oninput="renderDashboard()" class="h-8 px-2.5 border border-line bg-surface text-xs text-ink outline-none focus:border-ink flex-1 sm:w-48" />
@@ -143,7 +147,7 @@
 
       <!-- 섹션 구분선 -->
       <div class="font-mono text-[10px] text-inkmuted tracking-[0.08em] pb-2 border-b border-linelight mb-4 flex flex-col sm:flex-row sm:justify-between gap-1">
-        <span>INSTALLED & CLOUD LINKED APPS</span>
+        <span>INSTALLED & CLOUD LINKED APPS · SHORTCUTS: CTRL+1~6 전환 / CTRL+0 홈 / F11 전체화면</span>
         <span id="data-path-preview" class="truncate">ENV: LOADING...</span>
       </div>
 
@@ -153,8 +157,8 @@
       <!-- 하단 상태 알림 배너 -->
       <div id="status-banner" class="bg-artbluebg border border-[#cfe0fc] px-3.5 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mt-auto pt-3 text-[13px]" style="margin-top: 28px;">
         <div class="flex items-start sm:items-center gap-2.5">
-          <span class="bg-artblue text-white font-mono text-[10px] font-bold px-2 py-0.5 tracking-[0.05em] shrink-0 mt-0.5 sm:mt-0">GITHUB SYNC</span>
-          <span id="banner-text" class="text-ink leading-snug">모든 프로그램의 최신 버전이 GitHub과 자동 동기화되며, 다른 프로그램으로 전환해도 입력 및 작업 화면이 그대로 유지됩니다.</span>
+          <span class="bg-artblue text-white font-mono text-[10px] font-bold px-2 py-0.5 tracking-[0.05em] shrink-0 mt-0.5 sm:mt-0">AUTO BACKUP & SYNC</span>
+          <span id="banner-text" class="text-ink leading-snug">매일 첫 실행 시 자동 백업 스냅샷(최근 14일 보관)이 생성되며, 프로그램 전환 시 작업 화면이 그대로 유지됩니다.</span>
         </div>
         <div class="flex items-center gap-2 self-end sm:self-center shrink-0">
           <button type="button" onclick="openDataFolder()" class="bg-ink text-white font-mono text-[11px] px-3 py-1.5 tracking-[0.04em] hover:bg-[#333333] transition-colors">
@@ -229,20 +233,21 @@
     </div>
   </div>
 
-  <!-- 모달 2: 백업 데이터 관리 -->
+  <!-- 모달 2: 백업 데이터 관리 (전체/개별 선택 복원 & 개별 초기화 포함) -->
   <div id="backup-modal" class="fixed inset-0 bg-black/45 hidden items-center justify-center z-50 p-4">
-    <div class="bg-surface border border-ink w-full max-w-[540px] max-h-[85vh] flex flex-col shadow-xl">
+    <div class="bg-surface border border-ink w-full max-w-[600px] max-h-[88vh] flex flex-col shadow-xl">
       <div class="px-4 py-3.5 border-b border-line flex justify-between items-center font-bold text-sm">
-        <span>💾 백업 데이터 관리</span>
+        <span>💾 백업 및 데이터 관리</span>
         <button type="button" onclick="closeModal('backup-modal')" class="w-7 h-7 border border-line bg-surface hover:bg-subtle flex items-center justify-center text-xs">✕</button>
       </div>
       <div class="p-4 sm:p-5 overflow-y-auto flex flex-col gap-4 text-[13px]">
+        <!-- 상단 백업 액션 버튼 -->
         <div class="flex flex-wrap gap-2">
-          <button type="button" onclick="createFullBackup()" class="h-8 px-3 bg-ink text-white text-xs font-medium hover:bg-[#333333] flex items-center gap-1.5">
-            <span>+ 현재 전체 스냅샷 백업</span>
+          <button type="button" onclick="createFullBackup(false)" class="h-8 px-3 bg-ink text-white text-xs font-medium hover:bg-[#333333] flex items-center gap-1.5">
+            <span>+ 수동 스냅샷 생성</span>
           </button>
           <button type="button" onclick="exportBackupFile()" class="h-8 px-3 bg-surface border border-line text-ink text-xs hover:bg-subtle flex items-center gap-1.5">
-            <span>📤 JSON 파일로 내보내기</span>
+            <span>📤 JSON 파일 내보내기</span>
           </button>
           <label class="h-8 px-3 bg-surface border border-line text-ink text-xs hover:bg-subtle flex items-center gap-1.5 cursor-pointer">
             <span>📥 백업 파일 불러오기</span>
@@ -250,12 +255,40 @@
           </label>
         </div>
 
-        <div class="font-mono text-[10px] text-inkmuted tracking-[0.08em] pb-1.5 border-b border-linelight flex justify-between items-center">
-          <span>SAVED SNAPSHOTS</span>
-          <button type="button" onclick="openDataFolder()" class="underline hover:text-ink">저장 폴더 열기 ↗</button>
+        <!-- 선택 복원 패널 (특정 스냅샷의 '선택 복원' 클릭 시 표시) -->
+        <div id="selective-restore-panel" class="hidden border border-ink bg-canvas p-3.5 flex flex-col gap-2.5">
+          <div class="flex justify-between items-center border-b border-line pb-2">
+            <span class="font-bold text-xs text-ink" id="selective-restore-title">개별 프로그램 선택 복원</span>
+            <button type="button" onclick="closeSelectivePanel()" class="text-xs text-inksec hover:text-ink">✕ 닫기</button>
+          </div>
+          <p class="text-[11px] text-inksec">복원할 프로그램만 체크하세요. 선택하지 않은 프로그램의 현재 데이터는 그대로 유지됩니다.</p>
+          <div id="selective-checkbox-list" class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-40 overflow-y-auto py-1"></div>
+          <div class="flex justify-end gap-2 pt-1">
+            <button type="button" onclick="closeSelectivePanel()" class="h-7 px-3 bg-surface border border-line text-xs">취소</button>
+            <button type="button" onclick="executeSelectiveRestore()" class="h-7 px-3.5 bg-artblue text-white text-xs font-semibold hover:bg-blue-700">선택한 프로그램만 복원</button>
+          </div>
         </div>
-        <div id="backup-list" class="flex flex-col gap-2">
-          <p class="text-inkmuted text-xs">백업 목록을 불러오는 중...</p>
+
+        <!-- 저장된 스냅샷 목록 -->
+        <div>
+          <div class="font-mono text-[10px] text-inkmuted tracking-[0.08em] pb-1.5 border-b border-linelight mb-2 flex justify-between items-center">
+            <span>SAVED SNAPSHOTS (AUTO DAILY + MANUAL)</span>
+            <button type="button" onclick="openDataFolder()" class="underline hover:text-ink">저장 폴더 열기 ↗</button>
+          </div>
+          <div id="backup-list" class="flex flex-col gap-2 max-h-56 overflow-y-auto">
+            <p class="text-inkmuted text-xs">백업 목록을 불러오는 중...</p>
+          </div>
+        </div>
+
+        <!-- 개별 프로그램 데이터 초기화 영역 -->
+        <div class="border-t border-linelight pt-3">
+          <div class="font-mono text-[10px] text-inkmuted tracking-[0.08em] mb-2">SINGLE APP DATA RESET (개별 프로그램 데이터 초기화)</div>
+          <div class="flex flex-wrap items-center gap-2">
+            <select id="reset-app-select" class="h-8 px-2.5 border border-line bg-surface text-xs text-ink outline-none focus:border-ink flex-1 min-w-[180px]"></select>
+            <button type="button" onclick="resetSingleAppData()" class="h-8 px-3 bg-surface border border-red-300 text-red-600 text-xs font-medium hover:bg-red-600 hover:text-white hover:border-red-600 transition-colors">
+              선택한 앱 데이터 비우기
+            </button>
+          </div>
         </div>
       </div>
       <div class="px-4 py-3 border-t border-line bg-canvas flex justify-end">
@@ -298,7 +331,7 @@
   </div>
 
   <script>
-    // 1. 기본 등록된 6개 GitHub Raw HTML 프로그램 목록 (표시 이름에서 중복 버전 제거)
+    // 1. 기본 등록된 6개 GitHub Raw HTML 프로그램 목록
     const DEFAULT_APPS = [
       {
         id: 'beurer',
@@ -382,8 +415,13 @@
     const saveTimers = {};
     let currentFilter = 'all';
     let currentViewMode = 'grid';
+    let ghApiRateLimited = false;
+    let pendingSelectivePayload = null;
 
-    // 표시 이름에서 버전 표기(v2.6, v4_3, ver 1.0 등) 제거 헬퍼
+    const GH_META_CACHE_KEY = 'zalnet_gh_meta_cache';
+    const GH_META_TTL_MS = 15 * 60 * 1000; // 15분 캐시 (Rate Limit 방어)
+
+    // 표시 이름에서 버전 표기 제거
     function stripVersionText(text) {
       return (text || '')
         .replace(/\s*(?:ver(?:sion)?\.?\s*|v)\d+(?:[._]\d+)*/gi, '')
@@ -391,7 +429,15 @@
         .trim();
     }
 
-    // 토스트 알림 헬퍼
+    // 로컬 날짜 문자열 반환 (YYYY-MM-DD)
+    function getLocalDateString(date = new Date()) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    // 토스트 알림
     function showToast(message, type = 'dark') {
       const container = document.getElementById('toast-container');
       const el = document.createElement('div');
@@ -405,7 +451,7 @@
       }, 2800);
     }
 
-    // 커스텀 확인 대화상자 헬퍼
+    // 커스텀 확인 대화상자
     function showConfirm(title, message) {
       return new Promise((resolve) => {
         const modal = document.getElementById('confirm-modal');
@@ -454,7 +500,6 @@
       return await tauri.path.join(dataDir, subPath);
     }
 
-    // GitHub URL 정규화 (일반 blob URL -> raw.githubusercontent.com 자동 변환)
     function normalizeGitHubUrl(url) {
       let clean = (url || '').trim();
       if (clean.includes('github.com') && clean.includes('/blob/')) {
@@ -466,7 +511,6 @@
       return clean;
     }
 
-    // URL 붙여넣기 시 파일명에서 프로그램 이름(버전 제외)과 버전 태그 자동 분리 추출
     function autoFillFromUrl(rawInput) {
       const id = document.getElementById('edit-app-id').value;
       if (id) return;
@@ -488,7 +532,6 @@
       } catch (e) {}
     }
 
-    // GitHub HTML 코드와 URL에서 버전 태그 자동 추출
     function detectVersionFromHtml(htmlCode, rawUrl) {
       const metaMatch = htmlCode.match(/<meta[^>]+name=["']version["'][^>]+content=["']([^"']+)["']/i);
       if (metaMatch && metaMatch[1]) {
@@ -525,28 +568,50 @@
       return null;
     }
 
-    // GitHub API로 파일 마지막 업데이트 일자 조회
-    async function fetchGitHubLastUpdated(rawUrl) {
+    // GitHub API 호출 제한 방어 (15분 로컬 캐싱 + 403 감지)
+    async function fetchGitHubLastUpdated(rawUrl, forceRefresh = false) {
+      let metaCache = {};
+      try {
+        metaCache = JSON.parse(window.localStorage.getItem(GH_META_CACHE_KEY) || '{}');
+      } catch (e) {}
+
+      const cached = metaCache[rawUrl];
+      if (!forceRefresh && cached && (Date.now() - cached.fetchedAt < GH_META_TTL_MS)) {
+        return cached.dateStr;
+      }
+      if (ghApiRateLimited) {
+        return cached ? cached.dateStr : null;
+      }
+
       try {
         const match = rawUrl.match(/^https:\/\/raw\.githubusercontent\.com\/([^/]+)\/([^/]+)\/([^/]+)\/(.+)$/);
-        if (!match) return null;
+        if (!match) return cached ? cached.dateStr : null;
         const [, owner, repo, branch, encodedPath] = match;
         const apiUrl = `https://api.github.com/repos/${owner}/${repo}/commits?sha=${branch}&path=${encodedPath}&per_page=1`;
         const res = await fetch(apiUrl);
-        if (!res.ok) return null;
+        if (res.status === 403 || res.status === 429) {
+          ghApiRateLimited = true;
+          return cached ? cached.dateStr : null;
+        }
+        if (!res.ok) return cached ? cached.dateStr : null;
+
         const commits = await res.json();
         if (Array.isArray(commits) && commits[0]?.commit?.committer?.date) {
           const date = new Date(commits[0].commit.committer.date);
-          return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+          const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+          metaCache[rawUrl] = { dateStr, fetchedAt: Date.now() };
+          try {
+            window.localStorage.setItem(GH_META_CACHE_KEY, JSON.stringify(metaCache));
+          } catch (e) {}
+          return dateStr;
         }
       } catch (e) {}
-      return null;
+      return cached ? cached.dateStr : null;
     }
 
-    // 모든 앱의 GitHub 최신 버전 및 수정일 백그라운드 동기화
-    async function syncAllMetadataFromGitHub(showSpin = false) {
+    async function syncAllMetadataFromGitHub(isManual = false) {
       const btn = document.getElementById('btn-sync-all');
-      if (showSpin && btn) btn.classList.add('rotate-180');
+      if (isManual && btn) btn.classList.add('rotate-180');
 
       let updatedAny = false;
       await Promise.all(appsList.map(async (app) => {
@@ -563,7 +628,7 @@
               updatedAny = true;
             }
           }
-          const lastDate = await fetchGitHubLastUpdated(app.rawUrl);
+          const lastDate = await fetchGitHubLastUpdated(app.rawUrl, isManual);
           if (lastDate && app.lastUpdated !== lastDate) {
             app.lastUpdated = lastDate;
             updatedAny = true;
@@ -579,13 +644,13 @@
         await saveLauncherConfig();
       }
       await renderDashboard();
-      if (showSpin && btn) {
+      if (isManual && btn) {
         showToast('GitHub 최신 버전 동기화 완료');
         setTimeout(() => btn.classList.remove('rotate-180'), 350);
       }
     }
 
-    // 런처 설정 불러오기
+    // 런처 설정 로드
     async function loadLauncherConfig() {
       let loadedConfig = null;
 
@@ -614,7 +679,6 @@
         deletedDefaultIds = Array.isArray(loadedConfig.deletedDefaultIds) ? loadedConfig.deletedDefaultIds : [];
 
         let updated = false;
-        // 기존 저장된 앱 이름에 붙어 있던 버전 표기(v2.6, v4.3 등) 자동 정리
         for (const app of appsList) {
           const cleaned = stripVersionText(app.name);
           if (cleaned && cleaned !== app.name) {
@@ -623,7 +687,6 @@
           }
         }
 
-        // 새로 추가된 기본 프로그램이 누락되어 있다면 자동 병합
         for (const defApp of DEFAULT_APPS) {
           const existsInList = appsList.some(a => a.id === defApp.id || a.rawUrl === defApp.rawUrl);
           const wasDeleted = deletedDefaultIds.includes(defApp.id);
@@ -640,7 +703,6 @@
       await saveLauncherConfig();
     }
 
-    // 런처 설정 저장
     async function saveLauncherConfig() {
       const payload = JSON.stringify({ apps: appsList, deletedDefaultIds }, null, 2);
       try {
@@ -658,7 +720,7 @@
       }
     }
 
-    // 앱별 로컬 데이터 불러오기
+    // 앱별 로컬 데이터 로드
     async function preloadAppStorage(appId) {
       if (isTauriEnv()) {
         try {
@@ -683,36 +745,60 @@
       storageCache[appId] = storageCache[appId] || {};
     }
 
-    // 앱별 데이터 디스크 동기화
+    // 디스크 즉시 기록 헬퍼
+    async function writeAppStorageNow(appId) {
+      const jsonStr = JSON.stringify(storageCache[appId] || {}, null, 2);
+      try {
+        window.localStorage.setItem(`zalnet_app_data_${appId}`, jsonStr);
+      } catch (e) {}
+
+      if (isTauriEnv()) {
+        try {
+          const filePath = await getFilePath(`${appId}_storage.json`);
+          const tauri = getTauri();
+          await tauri.fs.writeTextFile(filePath, jsonStr);
+        } catch (e) {
+          console.error(`[${appId}] 디스크 저장 실패:`, e);
+        }
+      }
+    }
+
     function syncToDisk(appId) {
       clearTimeout(saveTimers[appId]);
-      saveTimers[appId] = setTimeout(async () => {
-        const jsonStr = JSON.stringify(storageCache[appId] || {}, null, 2);
-        try {
-          window.localStorage.setItem(`zalnet_app_data_${appId}`, jsonStr);
-        } catch (e) {}
-
-        if (isTauriEnv()) {
-          try {
-            const filePath = await getFilePath(`${appId}_storage.json`);
-            const tauri = getTauri();
-            await tauri.fs.writeTextFile(filePath, jsonStr);
-          } catch (e) {
-            console.error(`[${appId}] 디스크 저장 실패:`, e);
-          }
-        }
+      saveTimers[appId] = setTimeout(() => {
+        delete saveTimers[appId];
+        writeAppStorageNow(appId);
       }, 200);
     }
 
-    // iframe 내부 localStorage 변경 메시지 수신
-    window.addEventListener('message', (event) => {
-      const msg = event.data;
-      if (!msg || msg.type !== 'SYNC_LOCAL_STORAGE') return;
-      storageCache[msg.appId] = msg.data;
-      syncToDisk(msg.appId);
+    // 대기 중인 모든 디스크 저장 즉시 플러시
+    async function flushAllPendingSaves() {
+      const pendingIds = Object.keys(saveTimers);
+      for (const appId of pendingIds) {
+        clearTimeout(saveTimers[appId]);
+        delete saveTimers[appId];
+        await writeAppStorageNow(appId);
+      }
+    }
+
+    window.addEventListener('beforeunload', () => {
+      flushAllPendingSaves();
     });
 
-    // iframe 내부에 주입할 localStorage 가로채기 브릿지
+    // iframe 메시지 수신 (데이터 동기화 및 단축키 전달)
+    window.addEventListener('message', (event) => {
+      const msg = event.data;
+      if (!msg) return;
+
+      if (msg.type === 'SYNC_LOCAL_STORAGE') {
+        storageCache[msg.appId] = msg.data;
+        syncToDisk(msg.appId);
+      } else if (msg.type === 'SHORTCUT_FROM_FRAME') {
+        handleGlobalShortcut(msg.key, msg.ctrlKey);
+      }
+    });
+
+    // iframe 내부에 주입할 브릿지 스크립트 (개별 앱 데이터 격리 저장 + 단축키 포워딩, 앱 간 공유 없음)
     function createBridgeScript(appId, initialData) {
       const serialized = JSON.stringify(initialData).replace(/<\/script>/gi, '<\\/script>');
       return `
@@ -734,12 +820,22 @@
             try {
               Object.defineProperty(window, 'localStorage', { value: customStorage, configurable: true, writable: true });
             } catch (e) {}
+
+            // iframe 내부 포커스 상태에서도 F11, ESC, Ctrl+0~9 단축키를 런처로 전달
+            window.addEventListener('keydown', function(e) {
+              if (e.key === 'F11' || e.key === 'Escape' || (e.ctrlKey && !e.altKey && !e.shiftKey && /^[0-9]$/.test(e.key))) {
+                if (e.key === 'F11' || (e.ctrlKey && /^[0-9]$/.test(e.key))) {
+                  e.preventDefault();
+                }
+                window.parent.postMessage({ type: 'SHORTCUT_FROM_FRAME', key: e.key, ctrlKey: e.ctrlKey }, '*');
+              }
+            });
           })();
         <\/script>
       `;
     }
 
-    // 프로그램 열기 및 전환 (이미 실행 중이면 재로딩 없이 작업 상태 즉시 유지)
+    // 프로그램 열기 및 전환 (상태 보존)
     async function openOrSwitchApp(appId, forceReload = false) {
       const app = appsList.find(a => a.id === appId);
       if (!app) return;
@@ -795,9 +891,25 @@
       }
     }
 
-    // 실행 중인 프로그램 종료 및 워크스페이스 리소스 정리
-    function closeRunningApp(appId) {
+    // 상단 헤더에서 현재 실행 중인 앱 즉시 새로고침
+    async function reloadCurrentActiveApp() {
+      if (!activeViewId || activeViewId === 'dashboard') return;
+      const app = appsList.find(a => a.id === activeViewId);
+      if (!app) return;
+
+      const ok = await showConfirm(
+        '현재 앱 새로고침',
+        `'${app.name}' 화면을 GitHub의 최신 코드로 다시 불러올까요?\n(저장된 데이터는 유지되며, 저장하지 않은 임시 화면 상태만 초기화됩니다.)`
+      );
+      if (!ok) return;
+      await openOrSwitchApp(activeViewId, true);
+    }
+
+    // 실행 중인 프로그램 종료
+    async function closeRunningApp(appId) {
       if (!appId || appId === 'dashboard') return;
+      await flushAllPendingSaves();
+
       const app = appsList.find(a => a.id === appId);
       runningAppIds.delete(appId);
 
@@ -825,30 +937,51 @@
       activeViewId = viewId;
       const dashboard = document.getElementById('dashboard-view');
       const closeCurrentBtn = document.getElementById('btn-close-current-app');
+      const reloadCurrentBtn = document.getElementById('btn-reload-current-app');
 
       if (viewId === 'dashboard') {
         dashboard.classList.remove('hidden');
         document.querySelectorAll('.app-frame').forEach(f => f.classList.remove('active'));
-        if (closeCurrentBtn) {
-          closeCurrentBtn.classList.add('hidden');
-          closeCurrentBtn.classList.remove('flex');
-        }
+        [closeCurrentBtn, reloadCurrentBtn].forEach(btn => {
+          if (btn) {
+            btn.classList.add('hidden');
+            btn.classList.remove('flex');
+          }
+        });
         renderDashboard();
       } else {
         dashboard.classList.add('hidden');
         document.querySelectorAll('.app-frame').forEach(f => {
           f.classList.toggle('active', f.id === `frame-${viewId}`);
         });
-        if (closeCurrentBtn) {
-          closeCurrentBtn.classList.remove('hidden');
-          closeCurrentBtn.classList.add('flex');
-        }
+        [closeCurrentBtn, reloadCurrentBtn].forEach(btn => {
+          if (btn) {
+            btn.classList.remove('hidden');
+            btn.classList.add('flex');
+          }
+        });
       }
       renderQuickTabs();
     }
 
     function showDashboard() {
       activateView('dashboard');
+    }
+
+    // 카드 순서 이동 (사용자 지정 순서 모드)
+    async function moveAppOrder(appId, direction) {
+      const idx = appsList.findIndex(a => a.id === appId);
+      if (idx === -1) return;
+      const targetIdx = idx + direction;
+      if (targetIdx < 0 || targetIdx >= appsList.length) return;
+
+      const temp = appsList[idx];
+      appsList[idx] = appsList[targetIdx];
+      appsList[targetIdx] = temp;
+
+      await saveLauncherConfig();
+      renderQuickTabs();
+      renderDashboard();
     }
 
     // 상단 빠른 전환 탭 렌더링
@@ -858,6 +991,7 @@
 
       const homeBtn = document.createElement('button');
       homeBtn.type = 'button';
+      homeBtn.title = '런처 홈 (Ctrl+0)';
       homeBtn.className = `h-[30px] px-3 text-xs font-mono font-semibold border transition-colors shrink-0 ${
         activeViewId === 'dashboard'
           ? 'bg-ink text-white border-ink'
@@ -867,12 +1001,14 @@
       homeBtn.onclick = showDashboard;
       nav.appendChild(homeBtn);
 
-      appsList.forEach(app => {
+      appsList.forEach((app, index) => {
         const isRunning = runningAppIds.has(app.id);
         const isActive = activeViewId === app.id;
+        const shortcutHint = index < 9 ? ` (Ctrl+${index + 1})` : '';
         const tab = document.createElement('div');
         tab.setAttribute('role', 'button');
         tab.setAttribute('tabindex', '0');
+        tab.title = `${app.name}${shortcutHint}`;
         tab.className = `h-[30px] px-2.5 text-xs border transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer ${
           isActive
             ? 'bg-ink text-white border-ink font-semibold'
@@ -922,6 +1058,7 @@
       const grid = document.getElementById('apps-grid');
       const keyword = document.getElementById('search-input').value.trim().toLowerCase();
       const sortBy = document.getElementById('sort-select').value;
+      const canReorder = sortBy === 'custom' && !keyword && currentFilter === 'all';
 
       document.getElementById('total-count').innerText = appsList.length;
       document.getElementById('running-count').innerText = runningAppIds.size;
@@ -962,13 +1099,16 @@
         return;
       }
 
-      for (const app of filtered) {
+      for (let i = 0; i < filtered.length; i++) {
+        const app = filtered[i];
         await preloadAppStorage(app.id);
         const isRunning = runningAppIds.has(app.id);
         const dataObj = storageCache[app.id] || {};
         const dataKeys = Object.keys(dataObj).length;
         const dataBytes = new Blob([JSON.stringify(dataObj)]).size;
         const sizeLabel = dataKeys > 0 ? `${(dataBytes / 1024).toFixed(1)} KB (${dataKeys}항목)` : '저장 데이터 없음';
+        const globalIdx = appsList.findIndex(a => a.id === app.id);
+        const shortcutTag = globalIdx >= 0 && globalIdx < 9 ? `CTRL+${globalIdx + 1}` : '';
 
         const card = document.createElement('div');
         card.className = 'bg-surface border border-line hover:border-[#888884] transition-colors flex flex-col';
@@ -976,9 +1116,16 @@
           <div class="flex justify-between items-center px-3.5 py-2 border-b border-linelight font-mono text-[10px] text-inksec">
             <div class="flex items-center gap-2">
               <span class="font-semibold text-ink">${app.version || 'V1.0'}</span>
+              ${shortcutTag ? `<span class="text-inkmuted">[${shortcutTag}]</span>` : ''}
               ${isRunning ? `<span class="text-green-600 font-bold flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-green-600 inline-block"></span>RUNNING</span>` : ''}
             </div>
-            <button type="button" onclick="openAppEditModal('${app.id}')" class="hover:text-ink hover:underline">GITHUB ↗</button>
+            <div class="flex items-center gap-1.5">
+              ${canReorder ? `
+                <button type="button" onclick="moveAppOrder('${app.id}', -1)" ${i === 0 ? 'disabled' : ''} title="앞으로 이동" class="px-1 border border-linelight hover:border-ink disabled:opacity-30 disabled:pointer-events-none">◀</button>
+                <button type="button" onclick="moveAppOrder('${app.id}', 1)" ${i === filtered.length - 1 ? 'disabled' : ''} title="뒤로 이동" class="px-1 border border-linelight hover:border-ink disabled:opacity-30 disabled:pointer-events-none">▶</button>
+              ` : ''}
+              <button type="button" onclick="openAppEditModal('${app.id}')" class="hover:text-ink hover:underline ml-1">GITHUB ↗</button>
+            </div>
           </div>
           <div class="p-4 flex-1 flex flex-col gap-2.5">
             <div class="flex items-start gap-3">
@@ -1105,7 +1252,7 @@
       showToast('저장 폴더 경로가 클립보드에 복사되었습니다.');
     }
 
-    // 전체화면 모드 (F11 / ESC)
+    // 전체화면 모드 & 글로벌 키보드 단축키 처리
     async function toggleFocusFullscreen(forceState) {
       const isCurrentlyFull = document.body.classList.contains('focus-fullscreen');
       const nextState = typeof forceState === 'boolean' ? forceState : !isCurrentlyFull;
@@ -1122,12 +1269,34 @@
       }
     }
 
+    function handleGlobalShortcut(key, ctrlKey) {
+      if (key === 'F11') {
+        toggleFocusFullscreen();
+        return;
+      }
+      if (key === 'Escape' && document.body.classList.contains('focus-fullscreen')) {
+        toggleFocusFullscreen(false);
+        return;
+      }
+      if (ctrlKey && /^[0-9]$/.test(key)) {
+        const num = parseInt(key, 10);
+        if (num === 0) {
+          showDashboard();
+        } else if (appsList[num - 1]) {
+          openOrSwitchApp(appsList[num - 1].id, false);
+        }
+      }
+    }
+
     window.addEventListener('keydown', (e) => {
       if (e.key === 'F11') {
         e.preventDefault();
-        toggleFocusFullscreen();
+        handleGlobalShortcut('F11', false);
       } else if (e.key === 'Escape' && document.body.classList.contains('focus-fullscreen')) {
-        toggleFocusFullscreen(false);
+        handleGlobalShortcut('Escape', false);
+      } else if (e.ctrlKey && !e.altKey && !e.shiftKey && /^[0-9]$/.test(e.key)) {
+        e.preventDefault();
+        handleGlobalShortcut(e.key, true);
       }
     });
 
@@ -1144,7 +1313,7 @@
       el.classList.remove('flex');
     }
 
-    // 프로그램 추가 모달 열기
+    // 프로그램 추가 모달
     function openAddAppModal() {
       document.getElementById('edit-modal-title').innerText = '+ 새 HTML 프로그램 추가';
       document.getElementById('edit-app-id').value = '';
@@ -1159,7 +1328,7 @@
       setTimeout(() => document.getElementById('edit-app-url').focus(), 50);
     }
 
-    // 프로그램 수정 모달 열기
+    // 프로그램 수정 모달
     function openAppEditModal(appId) {
       const app = appsList.find(a => a.id === appId);
       if (!app) return;
@@ -1175,7 +1344,6 @@
       openModal('edit-modal');
     }
 
-    // 프로그램 추가 및 수정 저장
     async function saveAppEdit() {
       const id = document.getElementById('edit-app-id').value;
       const rawUrlInput = document.getElementById('edit-app-url').value;
@@ -1284,7 +1452,9 @@
       showToast(`[${app.name}] 목록에서 제거되었습니다.`);
     }
 
-    // 백업 데이터 관리 기능
+    // =========================================================================
+    // 백업 데이터 관리 (자동 일일 백업 + 전체/개별 선택 복원 + 개별 데이터 초기화)
+    // =========================================================================
     async function getBackupDir() {
       const tauri = getTauri();
       const backupDir = await getFilePath('backups');
@@ -1294,12 +1464,8 @@
       return backupDir;
     }
 
-    async function openBackupModal() {
-      openModal('backup-modal');
-      await renderBackupList();
-    }
-
     async function buildBackupPayload() {
+      await flushAllPendingSaves();
       const payload = {
         suite: 'ZALNET WORK APP SUITE',
         createdAt: new Date().toISOString(),
@@ -1313,7 +1479,91 @@
       return payload;
     }
 
-    async function createFullBackup() {
+    // 매일 첫 실행 시 자동 일일 백업 생성 및 14일 보관 정리
+    async function runAutoDailyBackup() {
+      try {
+        const today = getLocalDateString();
+        const autoFileName = `zalnet_auto_${today}.json`;
+
+        if (isTauriEnv()) {
+          const tauri = getTauri();
+          const backupDir = await getBackupDir();
+          const fullPath = await tauri.path.join(backupDir, autoFileName);
+
+          if (!(await tauri.fs.exists(fullPath))) {
+            const payload = await buildBackupPayload();
+            await tauri.fs.writeTextFile(fullPath, JSON.stringify(payload, null, 2));
+          }
+
+          // 최근 14일 치 자동 백업만 유지하고 오래된 자동 백업 정리
+          const entries = await tauri.fs.readDir(backupDir);
+          const autoFiles = entries
+            .filter(e => e.name && e.name.startsWith('zalnet_auto_') && e.name.endsWith('.json'))
+            .map(e => e.name)
+            .sort((a, b) => b.localeCompare(a));
+
+          for (const oldFile of autoFiles.slice(14)) {
+            const oldPath = await tauri.path.join(backupDir, oldFile);
+            await tauri.fs.remove(oldPath);
+          }
+        } else {
+          const existing = JSON.parse(window.localStorage.getItem('zalnet_snapshots') || '{}');
+          if (!existing[autoFileName]) {
+            existing[autoFileName] = await buildBackupPayload();
+            const autoKeys = Object.keys(existing)
+              .filter(k => k.startsWith('zalnet_auto_'))
+              .sort((a, b) => b.localeCompare(a));
+            for (const oldKey of autoKeys.slice(14)) {
+              delete existing[oldKey];
+            }
+            window.localStorage.setItem('zalnet_snapshots', JSON.stringify(existing));
+          }
+        }
+      } catch (e) {
+        console.warn('자동 일일 백업 스킵:', e);
+      }
+    }
+
+    async function openBackupModal() {
+      closeSelectivePanel();
+      renderResetAppSelect();
+      openModal('backup-modal');
+      await renderBackupList();
+    }
+
+    function renderResetAppSelect() {
+      const sel = document.getElementById('reset-app-select');
+      sel.innerHTML = '';
+      appsList.forEach(app => {
+        const opt = document.createElement('option');
+        opt.value = app.id;
+        opt.innerText = `${app.name} (${app.id}_storage.json)`;
+        sel.appendChild(opt);
+      });
+    }
+
+    async function resetSingleAppData() {
+      const appId = document.getElementById('reset-app-select').value;
+      const app = appsList.find(a => a.id === appId);
+      if (!app) return;
+
+      const ok = await showConfirm(
+        '개별 프로그램 데이터 초기화',
+        `'${app.name}' 프로그램에 저장된 모든 로컬 데이터를 비울까요?\n(초기화 전 '수동 스냅샷 생성'으로 백업을 먼저 만들어 두시는 것을 권장합니다.)`
+      );
+      if (!ok) return;
+
+      storageCache[appId] = {};
+      await writeAppStorageNow(appId);
+
+      if (runningAppIds.has(appId)) {
+        await openOrSwitchApp(appId, true);
+      }
+      await renderDashboard();
+      showToast(`[${app.name}] 데이터가 초기화되었습니다.`, 'success');
+    }
+
+    async function createFullBackup(isSilent = false) {
       try {
         const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
         const fileName = `zalnet_backup_${stamp}.json`;
@@ -1332,9 +1582,9 @@
         }
 
         await renderBackupList();
-        showToast(`백업 생성 완료: ${fileName}`, 'success');
+        if (!isSilent) showToast(`스냅샷 백업 완료: ${fileName}`, 'success');
       } catch (e) {
-        showToast('백업 생성 오류: ' + e.message, 'error');
+        if (!isSilent) showToast('백업 생성 오류: ' + e.message, 'error');
       }
     }
 
@@ -1344,7 +1594,7 @@
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `zalnet_suite_backup_${new Date().toISOString().slice(0, 10)}.json`;
+      a.download = `zalnet_suite_backup_${getLocalDateString()}.json`;
       a.click();
       URL.revokeObjectURL(url);
       showToast('전체 백업 JSON 파일을 내보냈습니다.');
@@ -1356,51 +1606,118 @@
       try {
         const text = await file.text();
         const parsed = JSON.parse(text);
-        await applyBackupPayload(parsed);
+        await applyBackupPayload(parsed, null);
       } catch (e) {
         showToast('유효하지 않은 백업 파일입니다: ' + e.message, 'error');
       }
       event.target.value = '';
     }
 
-    async function applyBackupPayload(payload) {
+    // selectedAppIds가 null이면 전체 복원, 배열이면 지정된 앱만 선택 복원
+    async function applyBackupPayload(payload, selectedAppIds = null) {
       if (!payload || !payload.appsData) {
         showToast('백업 데이터 형식이 올바르지 않습니다.', 'error');
         return;
       }
+
+      const targetIds = selectedAppIds || Object.keys(payload.appsData);
+      if (targetIds.length === 0) {
+        showToast('복원할 프로그램을 1개 이상 선택해 주세요.', 'error');
+        return;
+      }
+
+      const targetNames = targetIds
+        .map(id => {
+          const found = appsList.find(a => a.id === id) || (payload.launcherConfig || []).find(a => a.id === id);
+          return found ? found.name : id;
+        })
+        .join(', ');
+
       const ok = await showConfirm(
-        '백업 데이터 복원',
-        '선택한 백업 시점으로 모든 프로그램 데이터를 복원할까요?\n(실행 중인 프로그램은 새 데이터 반영을 위해 재시작됩니다.)'
+        selectedAppIds ? '선택 프로그램 데이터 복원' : '전체 백업 데이터 복원',
+        `대상 프로그램: [${targetNames}]\n\n선택한 시점의 데이터로 복원할까요?\n(실행 중인 대상 프로그램은 새 데이터 반영을 위해 재시작됩니다.)`
       );
       if (!ok) return;
 
-      for (const [appId, data] of Object.entries(payload.appsData)) {
+      for (const appId of targetIds) {
+        if (!Object.prototype.hasOwnProperty.call(payload.appsData, appId)) continue;
+        const data = payload.appsData[appId] || {};
         storageCache[appId] = data;
-        const jsonStr = JSON.stringify(data, null, 2);
-        try {
-          window.localStorage.setItem(`zalnet_app_data_${appId}`, jsonStr);
-        } catch (e) {}
-
-        if (isTauriEnv()) {
-          const tauri = getTauri();
-          const filePath = await getFilePath(`${appId}_storage.json`);
-          await tauri.fs.writeTextFile(filePath, jsonStr);
-        }
+        await writeAppStorageNow(appId);
 
         if (runningAppIds.has(appId)) {
           await openOrSwitchApp(appId, true);
         }
       }
 
-      if (Array.isArray(payload.launcherConfig) && payload.launcherConfig.length > 0) {
+      if (!selectedAppIds && Array.isArray(payload.launcherConfig) && payload.launcherConfig.length > 0) {
         appsList = payload.launcherConfig;
         await saveLauncherConfig();
       }
 
+      closeSelectivePanel();
       renderQuickTabs();
       await renderDashboard();
       closeModal('backup-modal');
       showToast('데이터 복원이 완료되었습니다.', 'success');
+    }
+
+    // 선택 복원 패널 열기
+    async function openSelectiveRestore(fileName) {
+      let payload = null;
+      if (isTauriEnv()) {
+        const tauri = getTauri();
+        const backupDir = await getBackupDir();
+        const fullPath = await tauri.path.join(backupDir, fileName);
+        const raw = await tauri.fs.readTextFile(fullPath);
+        payload = JSON.parse(raw);
+      } else {
+        const existing = JSON.parse(window.localStorage.getItem('zalnet_snapshots') || '{}');
+        payload = existing[fileName];
+      }
+
+      if (!payload || !payload.appsData) {
+        showToast('백업 데이터를 읽을 수 없습니다.', 'error');
+        return;
+      }
+
+      pendingSelectivePayload = payload;
+      document.getElementById('selective-restore-title').innerText = `선택 복원 (${fileName})`;
+      const listEl = document.getElementById('selective-checkbox-list');
+      listEl.innerHTML = '';
+
+      const appIdsInBackup = Object.keys(payload.appsData);
+      for (const appId of appIdsInBackup) {
+        const meta = appsList.find(a => a.id === appId) || (payload.launcherConfig || []).find(a => a.id === appId);
+        const labelText = meta ? meta.name : appId;
+        const keyCount = Object.keys(payload.appsData[appId] || {}).length;
+
+        const row = document.createElement('label');
+        row.className = 'flex items-center gap-2 bg-surface border border-line px-2.5 py-1.5 cursor-pointer hover:border-ink';
+        row.innerHTML = `
+          <input type="checkbox" class="selective-app-chk accent-ink" value="${appId}" checked />
+          <span class="text-xs font-medium text-ink truncate">${labelText}</span>
+          <span class="font-mono text-[10px] text-inkmuted ml-auto">${keyCount}항목</span>
+        `;
+        listEl.appendChild(row);
+      }
+
+      const panel = document.getElementById('selective-restore-panel');
+      panel.classList.remove('hidden');
+      panel.classList.add('flex');
+    }
+
+    function closeSelectivePanel() {
+      pendingSelectivePayload = null;
+      const panel = document.getElementById('selective-restore-panel');
+      panel.classList.add('hidden');
+      panel.classList.remove('flex');
+    }
+
+    async function executeSelectiveRestore() {
+      if (!pendingSelectivePayload) return;
+      const checked = Array.from(document.querySelectorAll('.selective-app-chk:checked')).map(el => el.value);
+      await applyBackupPayload(pendingSelectivePayload, checked);
     }
 
     async function renderBackupList() {
@@ -1428,15 +1745,23 @@
 
       listEl.innerHTML = '';
       for (const fileName of fileNames) {
+        const isAuto = fileName.startsWith('zalnet_auto_');
+        const badgeHtml = isAuto
+          ? `<span class="font-mono text-[9px] bg-artbluebg text-artblue border border-[#cfe0fc] px-1.5 py-0.5">AUTO DAILY</span>`
+          : `<span class="font-mono text-[9px] bg-subtle text-inksec border border-linelight px-1.5 py-0.5">MANUAL</span>`;
+
         const item = document.createElement('div');
-        item.className = 'border border-line px-3 py-2.5 flex justify-between items-center bg-canvas gap-2';
+        item.className = 'border border-line px-3 py-2.5 flex flex-wrap justify-between items-center bg-canvas gap-2';
         item.innerHTML = `
           <div class="min-w-0">
-            <div class="font-mono text-xs font-semibold text-ink truncate">${fileName}</div>
-            <div class="text-[11px] text-inksec">전체 프로그램 통합 스냅샷</div>
+            <div class="flex items-center gap-1.5">
+              ${badgeHtml}
+              <span class="font-mono text-xs font-semibold text-ink truncate">${fileName}</span>
+            </div>
           </div>
-          <div class="flex gap-1.5 shrink-0">
-            <button type="button" onclick="restoreSnapshot('${fileName}')" class="h-7 px-2.5 bg-ink text-white text-xs hover:bg-[#333333]">복원</button>
+          <div class="flex gap-1.5 shrink-0 ml-auto">
+            <button type="button" onclick="openSelectiveRestore('${fileName}')" class="h-7 px-2.5 bg-surface border border-ink text-ink text-xs font-medium hover:bg-subtle">선택 복원</button>
+            <button type="button" onclick="restoreSnapshot('${fileName}')" class="h-7 px-2.5 bg-ink text-white text-xs hover:bg-[#333333]">전체 복원</button>
             <button type="button" onclick="deleteSnapshot('${fileName}')" class="h-7 px-2.5 bg-surface border border-line text-ink text-xs hover:bg-subtle">삭제</button>
           </div>
         `;
@@ -1450,10 +1775,10 @@
         const backupDir = await getBackupDir();
         const fullPath = await tauri.path.join(backupDir, fileName);
         const raw = await tauri.fs.readTextFile(fullPath);
-        await applyBackupPayload(JSON.parse(raw));
+        await applyBackupPayload(JSON.parse(raw), null);
       } else {
         const existing = JSON.parse(window.localStorage.getItem('zalnet_snapshots') || '{}');
-        if (existing[fileName]) await applyBackupPayload(existing[fileName]);
+        if (existing[fileName]) await applyBackupPayload(existing[fileName], null);
       }
     }
 
@@ -1480,6 +1805,7 @@
       await loadLauncherConfig();
       renderQuickTabs();
       await renderDashboard();
+      await runAutoDailyBackup();
       syncAllMetadataFromGitHub(false);
     });
   </script>
