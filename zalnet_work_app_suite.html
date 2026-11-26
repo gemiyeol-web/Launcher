@@ -4,16 +4,18 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ZALNET WORK APP SUITE</title>
-  <!-- Tailwind CSS 로드 -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Google Fonts: Inter & JetBrains Mono -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <script>
     tailwind.config = {
       theme: {
         extend: {
+          fontFamily: {
+            sans: ['Inter', 'Pretendard', 'Malgun Gothic', 'sans-serif'],
+            mono: ['JetBrains Mono', 'Consolas', 'monospace']
+          },
           colors: {
             canvas: '#f7f7f5',
             surface: '#ffffff',
@@ -24,22 +26,16 @@
             inksec: '#686864',
             inkmuted: '#969692',
             artblue: '#2563eb',
-            artbluebg: '#ebf2fe',
-          },
-          fontFamily: {
-            sans: ['Inter', 'Pretendard', 'Malgun Gothic', '-apple-system', 'sans-serif'],
-            mono: ['JetBrains Mono', 'Consolas', 'monospace'],
+            artbluebg: '#ebf2fe'
           }
         }
       }
-    }
+    };
   </script>
   <style>
-    /* 커스텀 스크롤바 및 상태 보존 워크스페이스 전용 스타일 */
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #f7f7f5; }
-    ::-webkit-scrollbar-thumb { background: #c8c8c4; }
-    ::-webkit-scrollbar-thumb:hover { background: #969692; }
+    * { box-sizing: border-box; }
+    body.focus-fullscreen #top-header { display: none !important; }
+    body.focus-fullscreen #exit-fullscreen-pill { display: flex !important; }
 
     .app-frame {
       position: absolute;
@@ -57,55 +53,53 @@
       visibility: visible;
       opacity: 1;
       pointer-events: auto;
-      z-index: 10;
+      z-index: 5;
     }
-    body.focus-fullscreen #top-header {
-      display: none !important;
-    }
-    body.focus-fullscreen #exit-fullscreen-pill {
-      display: flex !important;
-    }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f7f7f5; }
+    ::-webkit-scrollbar-thumb { background: #cfcfc9; }
+    ::-webkit-scrollbar-thumb:hover { background: #9e9e98; }
   </style>
 </head>
 <body class="bg-canvas text-ink font-sans h-screen flex flex-col overflow-hidden select-none">
 
-  <!-- 상단 헤더 바 (ArtCraft Suite 에디토리얼 스타일) -->
-  <header id="top-header" class="min-h-[48px] bg-surface border-b border-line flex flex-wrap items-center justify-between px-3 sm:px-5 py-1.5 gap-2 shrink-0 z-30">
-    <div class="flex items-center gap-2.5 overflow-x-auto max-w-full">
-      <!-- 브랜드 로고 -->
-      <button type="button" onclick="showDashboard()" title="런처 홈(APPS)으로 이동 (Ctrl+0)" class="font-black text-[15px] tracking-[0.08em] text-ink flex items-center gap-2 shrink-0 hover:opacity-75 transition-opacity">
-        <span class="inline-block w-2.5 h-2.5 bg-ink"></span>
-        <span>ZALNET</span>
+  <!-- 상단 헤더 바 (ArtCraft Suite 스타일) -->
+  <header id="top-header" class="h-12 bg-surface border-b border-line flex items-center justify-between px-4 shrink-0 z-30">
+    <div class="flex items-center gap-3 min-w-0">
+      <button type="button" onclick="showDashboard()" title="런처 홈으로 이동 (Ctrl+0)" class="font-black text-[15px] tracking-[0.08em] text-ink flex items-center gap-2 hover:opacity-75 transition-opacity shrink-0">
+        <span>◼ ZALNET</span>
       </button>
-      <div class="w-[1px] h-4 bg-line shrink-0"></div>
+      <div class="w-px h-4 bg-line shrink-0"></div>
       <span class="font-mono text-[11px] text-inksec tracking-[0.06em] hidden md:inline shrink-0">WORK APP SUITE</span>
 
-      <!-- 빠른 프로그램 전환 탭 -->
-      <nav id="quick-tabs" class="flex items-center gap-1 ml-1 sm:ml-3 overflow-x-auto"></nav>
+      <!-- 실행 및 등록 앱 빠른 전환 탭 -->
+      <nav id="quick-tabs" class="flex items-center gap-1 ml-2 overflow-x-auto max-w-[42vw]"></nav>
     </div>
 
     <!-- 우측 유틸리티 액션 버튼 -->
     <div class="flex items-center gap-1.5 shrink-0">
-      <button type="button" id="btn-reload-current-app" onclick="reloadCurrentActiveApp()" title="현재 실행 중인 앱을 GitHub 최신 코드로 새로고침" class="hidden h-[30px] px-2.5 bg-artbluebg border border-[#bfd5fb] text-artblue text-xs font-medium hover:bg-artblue hover:text-white hover:border-artblue transition-colors items-center gap-1 rounded-none">
+      <button type="button" id="btn-reload-current-app" onclick="openOrSwitchApp(activeViewId, true)" title="현재 앱의 최신 GitHub 코드 즉시 새로고침" class="hidden h-[30px] px-2.5 bg-surface border border-line text-ink text-xs font-medium hover:bg-subtle hover:border-[#a8a8a4] transition-colors items-center gap-1 rounded-none">
         <span>↻</span>
-        <span>새로고침</span>
+        <span class="hidden sm:inline">새로고침</span>
       </button>
       <button type="button" id="btn-close-current-app" onclick="closeRunningApp(activeViewId)" title="현재 실행 중인 프로그램 닫기" class="hidden h-[30px] px-2.5 bg-red-50 border border-red-300 text-red-700 text-xs font-medium hover:bg-red-600 hover:text-white hover:border-red-600 transition-colors items-center gap-1 rounded-none">
         <span>✕</span>
-        <span>앱 닫기</span>
+        <span>현재 앱 닫기</span>
       </button>
-      <button type="button" onclick="openDataFolder()" title="저장 폴더 열기 및 경로 확인" class="h-[30px] px-2.5 bg-surface border border-line text-ink text-xs hover:bg-subtle hover:border-[#a8a8a4] transition-colors flex items-center gap-1.5 rounded-none">
+      <button type="button" onclick="openDataFolder()" title="현재 저장 폴더 열기" class="h-[30px] px-2.5 bg-surface border border-line text-ink text-xs hover:bg-subtle hover:border-[#a8a8a4] transition-colors flex items-center gap-1.5 rounded-none">
         <span>📁</span>
         <span class="hidden sm:inline">저장폴더</span>
       </button>
-      <button type="button" onclick="openBackupModal()" title="백업 데이터 생성, 선택 복원 및 초기화" class="h-[30px] px-2.5 bg-surface border border-line text-ink text-xs hover:bg-subtle hover:border-[#a8a8a4] transition-colors flex items-center gap-1.5 rounded-none">
+      <button type="button" onclick="openBackupModal()" title="백업 및 저장 경로 관리" class="h-[30px] px-2.5 bg-surface border border-line text-ink text-xs hover:bg-subtle hover:border-[#a8a8a4] transition-colors flex items-center gap-1.5 rounded-none">
         <span>💾</span>
         <span class="hidden sm:inline">백업관리</span>
       </button>
-      <button type="button" onclick="openAddAppModal()" title="새 HTML 프로그램 추가" class="h-[30px] px-2.5 bg-surface border border-line text-ink text-xs font-medium hover:bg-subtle hover:border-[#a8a8a4] transition-colors flex items-center gap-1 rounded-none">
-        <span>+ 프로그램 추가</span>
+      <button type="button" onclick="openAddAppModal()" title="새 HTML 프로그램 추가" class="h-[30px] px-2.5 bg-surface border border-line text-ink text-xs hover:bg-subtle hover:border-[#a8a8a4] transition-colors flex items-center gap-1 rounded-none">
+        <span>+</span>
+        <span>프로그램 추가</span>
       </button>
-      <button type="button" onclick="toggleFocusFullscreen()" title="전체화면 집중 모드 (F11)" class="h-[30px] px-2.5 bg-ink border border-ink text-white text-xs font-medium hover:bg-[#333333] transition-colors flex items-center gap-1.5 rounded-none">
+      <button type="button" onclick="toggleFocusFullscreen()" title="전체화면 집중 모드 (F11)" class="h-[30px] px-2.5 bg-ink text-white border border-ink text-xs hover:bg-[#333333] transition-colors flex items-center gap-1.5 rounded-none">
         <span>⛶</span>
         <span class="hidden sm:inline">전체화면</span>
       </button>
@@ -115,229 +109,188 @@
   <!-- 메인 콘텐츠 영역 -->
   <main id="main-body" class="flex-1 relative overflow-hidden">
 
-    <!-- 1. 대시보드 그리드 화면 -->
-    <section id="dashboard-view" class="absolute inset-0 overflow-y-auto px-4 sm:px-7 pt-5 pb-12 bg-canvas z-10 flex flex-col">
-      <!-- 필터, 검색, 정렬 툴바 -->
-      <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+    <!-- 1. 대시보드 (런처 그리드 화면) -->
+    <section id="dashboard-view" class="absolute inset-0 overflow-y-auto px-5 md:px-7 pt-5 pb-12 bg-canvas z-10 flex flex-col">
+
+      <!-- 필터 및 검색 툴바 -->
+      <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
         <div class="flex items-center gap-1.5">
-          <button type="button" id="tab-all" onclick="setFilter('all')" class="h-8 px-3.5 font-mono text-[11px] font-semibold border border-ink bg-ink text-white tracking-[0.04em] transition-colors">
+          <button type="button" id="tab-all" onclick="setFilter('all')" class="h-8 px-3.5 font-mono text-[11px] font-semibold border border-ink bg-ink text-white tracking-[0.04em]">
             ALL APPS (<span id="total-count">6</span>)
           </button>
-          <button type="button" id="tab-running" onclick="setFilter('running')" class="h-8 px-3.5 font-mono text-[11px] font-semibold border border-line bg-surface text-inksec hover:text-ink tracking-[0.04em] transition-colors">
+          <button type="button" id="tab-running" onclick="setFilter('running')" class="h-8 px-3.5 font-mono text-[11px] font-semibold border border-line bg-surface text-inksec hover:text-ink tracking-[0.04em]">
             RUNNING (<span id="running-count">0</span>)
           </button>
-          <button type="button" id="btn-sync-all" onclick="syncAllMetadataFromGitHub(true)" title="GitHub에서 최신 버전 및 수정일 강제 동기화" class="w-8 h-8 rounded-full border border-line bg-surface hover:bg-subtle flex items-center justify-center text-sm transition-transform duration-300">
+          <button type="button" id="btn-sync-all" onclick="syncAllMetadataFromGitHub(true)" title="GitHub에서 모든 앱의 최신 버전 및 업데이트 일자 동기화" class="w-8 h-8 rounded-full border border-line bg-surface hover:bg-subtle flex items-center justify-center text-sm transition-transform duration-300">
             ↻
           </button>
         </div>
 
-        <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-          <span class="font-mono text-[10px] text-inkmuted hidden md:inline">SORT</span>
+        <div class="flex items-center gap-2">
+          <span class="font-mono text-[10px] text-inkmuted hidden sm:inline">SORT</span>
           <select id="sort-select" onchange="renderDashboard()" class="h-8 px-2.5 border border-line bg-surface text-xs text-ink outline-none focus:border-ink">
-            <option value="custom">사용자 지정 순서</option>
+            <option value="custom">기본 순서</option>
             <option value="name">이름순 (가나다/A-Z)</option>
           </select>
-          <input type="text" id="search-input" placeholder="Search apps..." oninput="renderDashboard()" class="h-8 px-2.5 border border-line bg-surface text-xs text-ink outline-none focus:border-ink flex-1 sm:w-48" />
-          <div class="flex items-center">
-            <button type="button" id="btn-grid-view" onclick="toggleViewMode('grid')" title="그리드 보기" class="w-8 h-8 border border-ink bg-ink text-white flex items-center justify-center text-xs">⊞</button>
-            <button type="button" id="btn-list-view" onclick="toggleViewMode('list')" title="리스트 보기" class="w-8 h-8 border border-l-0 border-line bg-surface text-ink hover:bg-subtle flex items-center justify-center text-xs">☰</button>
-          </div>
+          <input type="text" id="search-input" placeholder="Search apps..." oninput="renderDashboard()" class="h-8 px-2.5 border border-line bg-surface text-xs text-ink outline-none focus:border-ink w-36 sm:w-48" />
+          <button type="button" onclick="toggleViewMode('grid')" title="그리드 보기" class="h-8 w-8 border border-line bg-surface hover:bg-subtle flex items-center justify-center text-xs">⊞</button>
+          <button type="button" onclick="toggleViewMode('list')" title="리스트 보기" class="h-8 w-8 border border-line bg-surface hover:bg-subtle flex items-center justify-center text-xs">☰</button>
         </div>
       </div>
 
-      <!-- 섹션 구분선 -->
-      <div class="font-mono text-[10px] text-inkmuted tracking-[0.08em] pb-2 border-b border-linelight mb-4 flex flex-col sm:flex-row sm:justify-between gap-1">
-        <span>INSTALLED & CLOUD LINKED APPS · SHORTCUTS: CTRL+1~6 전환 / CTRL+0 홈 / F11 전체화면</span>
-        <span id="data-path-preview" class="truncate">ENV: LOADING...</span>
+      <!-- 섹션 구분선 및 저장 경로 제어 -->
+      <div class="font-mono text-[10px] text-inkmuted tracking-[0.06em] pb-2 border-b border-linelight mb-4 flex justify-between items-center gap-2 flex-wrap">
+        <span>INSTALLED &amp; CLOUD LINKED APPS</span>
+        <div class="flex items-center gap-2 max-w-full">
+          <span id="data-path-preview" class="truncate max-w-[340px] sm:max-w-[460px]">STORAGE: READY</span>
+          <button type="button" onclick="changeDataFolder()" class="px-1.5 py-0.5 bg-surface border border-line text-ink hover:bg-subtle text-[10px] shrink-0">경로 변경</button>
+          <button type="button" id="btn-reset-path" onclick="resetDataFolder()" class="hidden px-1.5 py-0.5 bg-surface border border-line text-inksec hover:bg-subtle text-[10px] shrink-0">기본경로</button>
+        </div>
       </div>
 
       <!-- 앱 카드 그리드 -->
       <div id="apps-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
 
-      <!-- 하단 상태 알림 배너 -->
-      <div id="status-banner" class="bg-artbluebg border border-[#cfe0fc] px-3.5 py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mt-auto pt-3 text-[13px]" style="margin-top: 28px;">
-        <div class="flex items-start sm:items-center gap-2.5">
-          <span class="bg-artblue text-white font-mono text-[10px] font-bold px-2 py-0.5 tracking-[0.05em] shrink-0 mt-0.5 sm:mt-0">AUTO BACKUP & SYNC</span>
-          <span id="banner-text" class="text-ink leading-snug">매일 첫 실행 시 자동 백업 스냅샷(최근 14일 보관)이 생성되며, 프로그램 전환 시 작업 화면이 그대로 유지됩니다.</span>
+      <!-- 하단 상태 안내 배너 (최하단 배치) -->
+      <div id="status-banner" class="bg-artbluebg border border-[#cfe0fc] px-3.5 py-2.5 flex items-center justify-between mt-8 text-[13px] gap-3">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <span class="bg-artblue text-white font-mono text-[10px] font-bold px-2 py-0.5 tracking-[0.05em] shrink-0">GITHUB SYNC</span>
+          <span id="banner-text" class="text-ink truncate">GitHub 저장소의 최신 버전이 자동 반영되며, 프로그램을 전환해도 작업 화면과 로컬 데이터가 그대로 유지됩니다.</span>
         </div>
-        <div class="flex items-center gap-2 self-end sm:self-center shrink-0">
+        <div class="flex items-center gap-2 shrink-0">
           <button type="button" onclick="openDataFolder()" class="bg-ink text-white font-mono text-[11px] px-3 py-1.5 tracking-[0.04em] hover:bg-[#333333] transition-colors">
             OPEN DATA FOLDER
           </button>
-          <button type="button" onclick="document.getElementById('status-banner').classList.add('hidden')" class="w-7 h-7 flex items-center justify-center text-inksec hover:text-ink">
-            ✕
-          </button>
+          <button type="button" onclick="document.getElementById('status-banner').style.display='none'" class="text-inksec hover:text-ink px-1.5 text-sm">✕</button>
         </div>
       </div>
     </section>
 
-    <!-- 2. 백그라운드 상태 보존 멀티 워크스페이스 -->
+    <!-- 2. 백그라운드 상태 유지 멀티 워크스페이스 -->
     <div id="workspaces-container" class="absolute inset-0 bg-surface z-[1]"></div>
   </main>
 
-  <!-- 전체화면 종료 플로팅 버튼 -->
-  <button type="button" id="exit-fullscreen-pill" onclick="toggleFocusFullscreen(false)" class="hidden fixed top-2.5 right-3.5 z-[9999] bg-ink/90 text-white border border-white/20 px-3 py-1.5 text-[11px] font-mono items-center gap-1.5 backdrop-blur-sm hover:bg-black">
+  <!-- 전체화면 해제 플로팅 버튼 -->
+  <button type="button" id="exit-fullscreen-pill" onclick="toggleFocusFullscreen(false)" class="hidden fixed top-2.5 right-3.5 z-[9999] bg-ink/90 text-white border border-white/20 px-3 py-1.5 text-[11px] font-mono hover:bg-black backdrop-blur-sm items-center gap-1.5">
     <span>⛶ 전체화면 종료 (ESC)</span>
   </button>
 
-  <!-- 하단 상태 토스트 알림 -->
-  <div id="toast-container" class="fixed bottom-4 right-4 z-[9999] flex flex-col gap-2 pointer-events-none"></div>
+  <!-- 알림 토스트 -->
+  <div id="toast-box" class="hidden fixed bottom-4 right-4 bg-ink text-white px-4 py-2.5 text-xs font-mono z-[999] shadow-lg border border-white/10 max-w-md"></div>
 
-  <!-- 모달 1: 프로그램 추가 / 정보 및 이름 수정 -->
-  <div id="edit-modal" class="fixed inset-0 bg-black/45 hidden items-center justify-center z-50 p-4">
-    <div class="bg-surface border border-ink w-full max-w-[520px] max-h-[90vh] flex flex-col shadow-xl">
+  <!-- 모달 1: 프로그램 정보 수정 및 신규 추가 -->
+  <div id="edit-modal" class="hidden fixed inset-0 bg-black/45 items-center justify-center z-50 p-4">
+    <div class="bg-surface border border-ink w-full max-w-lg max-h-[88vh] flex flex-col shadow-xl">
       <div class="px-4 py-3.5 border-b border-line flex justify-between items-center font-bold text-sm">
         <span id="edit-modal-title">프로그램 정보 및 이름 변경</span>
-        <button type="button" onclick="closeModal('edit-modal')" class="w-7 h-7 border border-line bg-surface hover:bg-subtle flex items-center justify-center text-xs">✕</button>
+        <button type="button" onclick="closeModal('edit-modal')" class="h-7 w-7 border border-line bg-surface hover:bg-subtle flex items-center justify-center text-xs">✕</button>
       </div>
-      <div class="p-4 sm:p-5 overflow-y-auto flex flex-col gap-3.5 text-[13px]">
+      <div class="p-4 overflow-y-auto flex flex-col gap-3.5 text-[13px]">
         <input type="hidden" id="edit-app-id" />
-        <div class="flex flex-col gap-1.5">
-          <label class="text-xs font-semibold text-inksec">GitHub HTML 주소 <span class="text-artblue">*</span></label>
-          <input type="text" id="edit-app-url" oninput="autoFillFromUrl(this.value)" placeholder="https://github.com/아이디/저장소/blob/main/파일명.html" class="h-9 px-2.5 border border-line text-xs font-mono outline-none focus:border-ink" />
-          <span class="text-[11px] text-inkmuted">일반 GitHub 주소(/blob/)를 붙여넣으면 Raw 코드 주소와 버전 태그가 자동 인식됩니다.</span>
-        </div>
-        <div class="flex flex-col gap-1.5">
-          <label class="text-xs font-semibold text-inksec">프로그램 표시 이름 <span class="text-artblue">*</span></label>
-          <input type="text" id="edit-app-name" placeholder="예: 발주 관리 (버전 숫자는 상단 태그에 자동 표시됨)" class="h-9 px-2.5 border border-line text-[13px] outline-none focus:border-ink" />
-        </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div class="flex flex-col gap-1.5">
-            <label class="text-xs font-semibold text-inksec">부제목 (역할 요약)</label>
-            <input type="text" id="edit-app-subtitle" placeholder="예: Profit & Fee Simulator" class="h-9 px-2.5 border border-line text-xs outline-none focus:border-ink" />
-          </div>
-          <div class="flex flex-col gap-1.5">
-            <label class="text-xs font-semibold text-inksec">버전 태그</label>
-            <input type="text" id="edit-app-version" placeholder="AUTO (자동 감지)" class="h-9 px-2.5 border border-line text-xs font-mono outline-none focus:border-ink" />
+        <div class="flex flex-col gap-1">
+          <label class="text-xs font-semibold text-inksec">GitHub HTML 주소 (일반 주소 또는 Raw 주소)</label>
+          <div class="flex gap-1.5">
+            <input type="text" id="edit-app-url" placeholder="https://github.com/아이디/저장소/blob/main/파일.html" class="flex-1 h-8 px-2.5 border border-line text-xs font-mono outline-none focus:border-ink" />
+            <button type="button" onclick="autoFillFromGitHubUrl()" class="h-8 px-2.5 bg-subtle border border-line text-xs font-medium hover:bg-line/50 shrink-0">자동 인식</button>
           </div>
         </div>
-        <div class="flex flex-col gap-1.5">
+        <div class="flex flex-col gap-1">
+          <label class="text-xs font-semibold text-inksec">프로그램 표시 이름</label>
+          <input type="text" id="edit-app-name" placeholder="예: 마진 관리" class="h-8 px-2.5 border border-line text-xs outline-none focus:border-ink" />
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="text-xs font-semibold text-inksec">부제목 (역할 요약)</label>
+          <input type="text" id="edit-app-subtitle" placeholder="예: Margin & Cost Simulator" class="h-8 px-2.5 border border-line text-xs outline-none focus:border-ink" />
+        </div>
+        <div class="flex flex-col gap-1">
           <label class="text-xs font-semibold text-inksec">상세 설명</label>
-          <input type="text" id="edit-app-desc" placeholder="프로그램에 대한 간단한 설명을 입력하세요." class="h-9 px-2.5 border border-line text-xs outline-none focus:border-ink" />
+          <input type="text" id="edit-app-desc" placeholder="프로그램에 대한 간단한 설명" class="h-8 px-2.5 border border-line text-xs outline-none focus:border-ink" />
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="text-xs font-semibold text-inksec">버전 태그 (AUTO 입력 시 GitHub 코드에서 자동 감지)</label>
+          <input type="text" id="edit-app-version" placeholder="AUTO" class="h-8 px-2.5 border border-line text-xs font-mono outline-none focus:border-ink" />
         </div>
       </div>
-      <div class="px-4 py-3 border-t border-line bg-canvas flex flex-wrap items-center justify-between gap-2">
-        <div class="flex items-center gap-1.5">
-          <button type="button" id="btn-reload-source" onclick="reloadAppFromModal()" class="h-8 px-2.5 bg-surface border border-line text-ink text-xs hover:bg-subtle flex items-center gap-1">
-            <span>🔄 코드 재시작</span>
-          </button>
-          <button type="button" id="btn-delete-app" onclick="requestDeleteApp()" class="h-8 px-2.5 bg-surface border border-red-300 text-red-600 text-xs hover:bg-red-50 flex items-center gap-1">
-            <span>🗑 삭제</span>
-          </button>
+      <div class="px-4 py-3 border-t border-line bg-canvas flex justify-between items-center gap-2">
+        <div class="flex gap-1.5">
+          <button type="button" id="btn-reload-source" onclick="reloadAppFromModal()" class="h-8 px-2.5 bg-surface border border-line text-xs hover:bg-subtle">🔄 최신 코드 재시작</button>
+          <button type="button" id="btn-delete-app" onclick="deleteAppFromModal()" class="h-8 px-2.5 bg-surface border border-red-300 text-red-600 text-xs hover:bg-red-50">삭제</button>
         </div>
-        <div class="flex items-center gap-2 ml-auto">
-          <button type="button" onclick="closeModal('edit-modal')" class="h-8 px-3 bg-surface border border-line text-ink text-xs hover:bg-subtle">취소</button>
-          <button type="button" onclick="saveAppEdit()" class="h-8 px-4 bg-ink border border-ink text-white text-xs font-semibold hover:bg-[#333333]">저장하기</button>
+        <div class="flex gap-1.5">
+          <button type="button" onclick="closeModal('edit-modal')" class="h-8 px-3 bg-surface border border-line text-xs hover:bg-subtle">취소</button>
+          <button type="button" onclick="saveAppEdit()" class="h-8 px-3.5 bg-ink text-white text-xs font-medium hover:bg-[#333333]">저장하기</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- 모달 2: 백업 데이터 관리 (전체/개별 선택 복원 & 개별 초기화 포함) -->
-  <div id="backup-modal" class="fixed inset-0 bg-black/45 hidden items-center justify-center z-50 p-4">
-    <div class="bg-surface border border-ink w-full max-w-[600px] max-h-[88vh] flex flex-col shadow-xl">
+  <!-- 모달 2: 백업 데이터 관리 및 저장 경로 설정 -->
+  <div id="backup-modal" class="hidden fixed inset-0 bg-black/45 items-center justify-center z-50 p-4">
+    <div class="bg-surface border border-ink w-full max-w-xl max-h-[88vh] flex flex-col shadow-xl">
       <div class="px-4 py-3.5 border-b border-line flex justify-between items-center font-bold text-sm">
-        <span>💾 백업 및 데이터 관리</span>
-        <button type="button" onclick="closeModal('backup-modal')" class="w-7 h-7 border border-line bg-surface hover:bg-subtle flex items-center justify-center text-xs">✕</button>
+        <span>💾 백업 데이터 및 저장 폴더 관리</span>
+        <button type="button" onclick="closeModal('backup-modal')" class="h-7 w-7 border border-line bg-surface hover:bg-subtle flex items-center justify-center text-xs">✕</button>
       </div>
-      <div class="p-4 sm:p-5 overflow-y-auto flex flex-col gap-4 text-[13px]">
-        <!-- 상단 백업 액션 버튼 -->
-        <div class="flex flex-wrap gap-2">
-          <button type="button" onclick="createFullBackup(false)" class="h-8 px-3 bg-ink text-white text-xs font-medium hover:bg-[#333333] flex items-center gap-1.5">
-            <span>+ 수동 스냅샷 생성</span>
-          </button>
-          <button type="button" onclick="exportBackupFile()" class="h-8 px-3 bg-surface border border-line text-ink text-xs hover:bg-subtle flex items-center gap-1.5">
-            <span>📤 JSON 파일 내보내기</span>
-          </button>
-          <label class="h-8 px-3 bg-surface border border-line text-ink text-xs hover:bg-subtle flex items-center gap-1.5 cursor-pointer">
+      <div class="p-4 overflow-y-auto flex flex-col gap-3.5 text-[13px]">
+        <!-- 저장 폴더 지정 섹션 (클라우드 동기화 폴더 연동) -->
+        <div class="bg-canvas border border-line p-3 flex flex-col gap-2">
+          <div class="flex justify-between items-center">
+            <span class="font-mono text-[10px] font-bold text-inksec tracking-[0.06em]">DATA STORAGE DIRECTORY (공유/클라우드 폴더 연동)</span>
+            <div class="flex gap-1.5">
+              <button type="button" onclick="changeDataFolder()" class="h-6 px-2 bg-ink text-white text-[11px] hover:bg-[#333333]">폴더 선택</button>
+              <button type="button" onclick="resetDataFolder()" class="h-6 px-2 bg-surface border border-line text-ink text-[11px] hover:bg-subtle">기본값 복원</button>
+            </div>
+          </div>
+          <div id="modal-data-path" class="font-mono text-[11px] text-ink break-all bg-surface border border-linelight px-2 py-1.5"></div>
+        </div>
+
+        <div class="flex gap-2 flex-wrap">
+          <button type="button" onclick="createFullBackup()" class="h-8 px-3 bg-ink text-white text-xs font-medium hover:bg-[#333333]">+ 현재 전체 데이터 백업 생성</button>
+          <button type="button" onclick="exportBackupFile()" class="h-8 px-3 bg-surface border border-line text-xs hover:bg-subtle">📤 JSON 파일로 내보내기</button>
+          <label class="h-8 px-3 bg-surface border border-line text-xs hover:bg-subtle flex items-center cursor-pointer">
             <span>📥 백업 파일 불러오기</span>
             <input type="file" accept=".json" class="hidden" onchange="importBackupFile(event)" />
           </label>
         </div>
 
-        <!-- 선택 복원 패널 (특정 스냅샷의 '선택 복원' 클릭 시 표시) -->
-        <div id="selective-restore-panel" class="hidden border border-ink bg-canvas p-3.5 flex flex-col gap-2.5">
-          <div class="flex justify-between items-center border-b border-line pb-2">
-            <span class="font-bold text-xs text-ink" id="selective-restore-title">개별 프로그램 선택 복원</span>
-            <button type="button" onclick="closeSelectivePanel()" class="text-xs text-inksec hover:text-ink">✕ 닫기</button>
-          </div>
-          <p class="text-[11px] text-inksec">복원할 프로그램만 체크하세요. 선택하지 않은 프로그램의 현재 데이터는 그대로 유지됩니다.</p>
-          <div id="selective-checkbox-list" class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-40 overflow-y-auto py-1"></div>
-          <div class="flex justify-end gap-2 pt-1">
-            <button type="button" onclick="closeSelectivePanel()" class="h-7 px-3 bg-surface border border-line text-xs">취소</button>
-            <button type="button" onclick="executeSelectiveRestore()" class="h-7 px-3.5 bg-artblue text-white text-xs font-semibold hover:bg-blue-700">선택한 프로그램만 복원</button>
-          </div>
+        <div class="font-mono text-[10px] text-inkmuted tracking-[0.08em] pb-1.5 border-b border-linelight flex justify-between items-center">
+          <span>SAVED SNAPSHOTS (AUTO DAILY 14 DAYS + MANUAL)</span>
+          <button type="button" onclick="openDataFolder()" class="underline hover:text-ink">저장 폴더 열기 ↗</button>
+        </div>
+        <div id="backup-list" class="flex flex-col gap-2">
+          <p class="text-inkmuted text-xs">백업 목록을 불러오는 중...</p>
         </div>
 
-        <!-- 저장된 스냅샷 목록 -->
-        <div>
-          <div class="font-mono text-[10px] text-inkmuted tracking-[0.08em] pb-1.5 border-b border-linelight mb-2 flex justify-between items-center">
-            <span>SAVED SNAPSHOTS (AUTO DAILY + MANUAL)</span>
-            <button type="button" onclick="openDataFolder()" class="underline hover:text-ink">저장 폴더 열기 ↗</button>
-          </div>
-          <div id="backup-list" class="flex flex-col gap-2 max-h-56 overflow-y-auto">
-            <p class="text-inkmuted text-xs">백업 목록을 불러오는 중...</p>
-          </div>
+        <div class="font-mono text-[10px] text-inkmuted tracking-[0.08em] pb-1.5 border-b border-linelight mt-2 flex justify-between items-center">
+          <span>INDIVIDUAL APP DATA RESET (개별 데이터 초기화)</span>
         </div>
-
-        <!-- 개별 프로그램 데이터 초기화 영역 -->
-        <div class="border-t border-linelight pt-3">
-          <div class="font-mono text-[10px] text-inkmuted tracking-[0.08em] mb-2">SINGLE APP DATA RESET (개별 프로그램 데이터 초기화)</div>
-          <div class="flex flex-wrap items-center gap-2">
-            <select id="reset-app-select" class="h-8 px-2.5 border border-line bg-surface text-xs text-ink outline-none focus:border-ink flex-1 min-w-[180px]"></select>
-            <button type="button" onclick="resetSingleAppData()" class="h-8 px-3 bg-surface border border-red-300 text-red-600 text-xs font-medium hover:bg-red-600 hover:text-white hover:border-red-600 transition-colors">
-              선택한 앱 데이터 비우기
-            </button>
-          </div>
-        </div>
+        <div id="app-reset-list" class="border border-linelight divide-y divide-linelight"></div>
       </div>
       <div class="px-4 py-3 border-t border-line bg-canvas flex justify-end">
-        <button type="button" onclick="closeModal('backup-modal')" class="h-8 px-4 bg-surface border border-line text-ink text-xs hover:bg-subtle">닫기</button>
+        <button type="button" onclick="closeModal('backup-modal')" class="h-8 px-3.5 bg-surface border border-line text-xs hover:bg-subtle">닫기</button>
       </div>
     </div>
   </div>
 
-  <!-- 모달 3: 저장 폴더 경로 및 데이터 현황 안내 -->
-  <div id="folder-modal" class="fixed inset-0 bg-black/45 hidden items-center justify-center z-50 p-4">
-    <div class="bg-surface border border-ink w-full max-w-[500px] flex flex-col shadow-xl">
-      <div class="px-4 py-3.5 border-b border-line flex justify-between items-center font-bold text-sm">
-        <span>📁 로컬 데이터 저장 폴더 정보</span>
-        <button type="button" onclick="closeModal('folder-modal')" class="w-7 h-7 border border-line bg-surface hover:bg-subtle flex items-center justify-center text-xs">✕</button>
-      </div>
-      <div class="p-4 sm:p-5 flex flex-col gap-3 text-xs">
-        <p id="folder-modal-desc" class="text-inksec leading-relaxed"></p>
-        <div class="bg-canvas border border-line p-2.5 flex items-center justify-between gap-2">
-          <code id="folder-path-text" class="font-mono text-[11px] text-ink break-all"></code>
-          <button type="button" onclick="copyFolderPath()" class="px-2.5 py-1.5 bg-ink text-white font-mono text-[10px] shrink-0 hover:bg-[#333333]">COPY</button>
-        </div>
-        <div id="storage-summary-list" class="border border-linelight divide-y divide-linelight max-h-48 overflow-y-auto"></div>
-      </div>
-      <div class="px-4 py-3 border-t border-line bg-canvas flex justify-end">
-        <button type="button" onclick="closeModal('folder-modal')" class="h-8 px-4 bg-surface border border-line text-ink text-xs hover:bg-subtle">닫기</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 모달 4: 커스텀 확인 대화상자 -->
-  <div id="confirm-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-[60] p-4">
-    <div class="bg-surface border border-ink w-full max-w-[400px] flex flex-col shadow-2xl">
+  <!-- 모달 3: 커스텀 확인 대화상자 -->
+  <div id="confirm-modal" class="hidden fixed inset-0 bg-black/50 items-center justify-center z-[60] p-4">
+    <div class="bg-surface border border-ink w-full max-w-sm flex flex-col shadow-xl">
       <div class="px-4 py-3 border-b border-line font-bold text-sm" id="confirm-title">확인</div>
       <div class="p-4 text-xs text-inksec leading-relaxed whitespace-pre-line" id="confirm-message"></div>
-      <div class="px-4 py-3 border-t border-line bg-canvas flex justify-end gap-2">
-        <button type="button" id="confirm-cancel-btn" class="h-8 px-3 bg-surface border border-line text-ink text-xs hover:bg-subtle">취소</button>
-        <button type="button" id="confirm-ok-btn" class="h-8 px-4 bg-ink text-white text-xs font-semibold hover:bg-[#333333]">확인</button>
+      <div class="px-4 py-2.5 border-t border-line bg-canvas flex justify-end gap-1.5">
+        <button type="button" id="confirm-cancel-btn" class="h-7 px-3 bg-surface border border-line text-xs hover:bg-subtle">취소</button>
+        <button type="button" id="confirm-ok-btn" class="h-7 px-3 bg-ink text-white text-xs font-medium hover:bg-[#333333]">확인</button>
       </div>
     </div>
   </div>
 
   <script>
-    // 1. 기본 등록된 6개 GitHub Raw HTML 프로그램 목록
     const DEFAULT_APPS = [
       {
         id: 'beurer',
         name: '보이러 관리',
         subtitle: 'Product & N-Delivery Hub',
-        desc: '보이러 제품 라인업, N배송 출고 및 재고 데이터를 관리합니다.',
+        desc: '보이러 제품 라인업, N배송 출고 및 재고 데이터를 통합 관리합니다.',
         version: 'CHECKING...',
         lastUpdated: '',
         iconType: 'beurer',
@@ -346,8 +299,8 @@
       {
         id: 'coupang',
         name: '쿠팡 관리',
-        subtitle: 'Rocket Delivery & Margin Tool',
-        desc: '쿠팡 로켓배송 발주 변환, 재고 소진 예측 및 마진 시뮬레이션을 수행합니다.',
+        subtitle: 'Rocket Delivery & Inventory',
+        desc: '쿠팡 로켓배송 발주 변환 및 재고 소진 예측을 수행합니다.',
         version: 'CHECKING...',
         lastUpdated: '',
         iconType: 'coupang',
@@ -366,8 +319,8 @@
       {
         id: 'margin',
         name: '마진 관리',
-        subtitle: 'Margin & Profitability Simulator',
-        desc: '판매가, 수수료, 원가 및 배송비를 반영한 채널별 마진율을 계산합니다.',
+        subtitle: 'Margin & Cost Simulator',
+        desc: '상품별 원가, 수수료, 배송비를 반영한 순이익 및 마진율을 계산합니다.',
         version: 'CHECKING...',
         lastUpdated: '',
         iconType: 'margin',
@@ -376,8 +329,8 @@
       {
         id: 'qna',
         name: '문의 관리',
-        subtitle: 'Customer Q&A & CS Manager',
-        desc: '고객 문의(Q&A) 응대 템플릿과 처리 현황을 체계적으로 관리합니다.',
+        subtitle: 'Customer Q&A Response Hub',
+        desc: '고객 문의 내역 분류, 템플릿 응답 및 처리 현황을 관리합니다.',
         version: 'V2.6',
         lastUpdated: '',
         iconType: 'qna',
@@ -386,8 +339,8 @@
       {
         id: 'balju',
         name: '발주 관리',
-        subtitle: 'Inventory & Purchase Forecasting',
-        desc: '재고 소진 속도를 예측하고 적정 발주 수량 및 일정을 산출합니다.',
+        subtitle: 'Purchase Order & Supply Chain',
+        desc: '공급처별 발주서 생성, 입고 일정 및 발주 수량을 관리합니다.',
         version: 'V4.3',
         lastUpdated: '',
         iconType: 'balju',
@@ -395,63 +348,43 @@
       }
     ];
 
-    // ArtCraft 스타일 미니멀 기하학 SVG 아이콘 세트
     const SVG_ICONS = {
-      beurer: `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="1.6"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/><circle cx="12" cy="12" r="4" fill="#e5e5e0"/></svg>`,
-      coupang: `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="1.6"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" fill="#e5e5e0"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>`,
-      ad: `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" fill="#e5e5e0"/><line x1="8" y1="17" x2="8" y2="11"/><line x1="12" y1="17" x2="12" y2="7"/><line x1="16" y1="17" x2="16" y2="13"/></svg>`,
-      margin: `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="1.6"><rect x="4" y="2" width="16" height="20" fill="#e5e5e0"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="11" x2="10" y2="11"/><line x1="14" y1="11" x2="16" y2="11"/><line x1="8" y1="15" x2="10" y2="15"/><line x1="14" y1="15" x2="16" y2="15"/><line x1="8" y1="19" x2="16" y2="19"/></svg>`,
-      qna: `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="1.6"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" fill="#e5e5e0"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="13" y2="13"/></svg>`,
-      balju: `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="1.6"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" fill="#e5e5e0"/><rect x="8" y="2" width="8" height="4"/><polyline points="9 12 11 14 15 10"/><line x1="9" y1="17" x2="15" y2="17"/></svg>`,
-      custom: `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="1.6"><polygon points="12 2 2 7 12 12 22 7 12 2" fill="#e5e5e0"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>`
+      beurer: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="1.6"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/><circle cx="12" cy="12" r="4" fill="#e5e5e0"/></svg>',
+      coupang: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="1.6"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" fill="#e5e5e0"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>',
+      ad: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" fill="#e5e5e0"/><line x1="8" y1="17" x2="8" y2="11"/><line x1="12" y1="17" x2="12" y2="7"/><line x1="16" y1="17" x2="16" y2="13"/></svg>',
+      margin: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="1.6"><rect x="4" y="2" width="16" height="20" fill="#e5e5e0"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="10" y2="10"/><line x1="14" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="10" y2="14"/><line x1="14" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="16" y2="18"/></svg>',
+      qna: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="1.6"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" fill="#e5e5e0"/></svg>',
+      balju: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="1.6"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" fill="#e5e5e0"/><rect x="9" y="3" width="6" height="4"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>',
+      custom: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="1.6"><polygon points="12 2 2 7 12 12 22 7 12 2" fill="#e5e5e0"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>'
     };
 
+    const CUSTOM_DIR_KEY = 'zalnet_custom_data_dir';
     let appsList = [];
-    let deletedDefaultIds = [];
     let activeViewId = 'dashboard';
     const runningAppIds = new Set();
     const blobUrls = {};
     const storageCache = {};
     const saveTimers = {};
+    const loadedSnapshotsCache = {};
     let currentFilter = 'all';
-    let currentViewMode = 'grid';
-    let ghApiRateLimited = false;
-    let pendingSelectivePayload = null;
 
-    const GH_META_CACHE_KEY = 'zalnet_gh_meta_cache';
-    const GH_META_TTL_MS = 15 * 60 * 1000; // 15분 캐시 (Rate Limit 방어)
-
-    // 표시 이름에서 버전 표기 제거
-    function stripVersionText(text) {
-      return (text || '')
-        .replace(/\s*(?:ver(?:sion)?\.?\s*|v)\d+(?:[._]\d+)*/gi, '')
-        .replace(/\s+/g, ' ')
-        .trim();
-    }
-
-    // 로컬 날짜 문자열 반환 (YYYY-MM-DD)
-    function getLocalDateString(date = new Date()) {
-      const y = date.getFullYear();
-      const m = String(date.getMonth() + 1).padStart(2, '0');
-      const d = String(date.getDate()).padStart(2, '0');
-      return `${y}-${m}-${d}`;
-    }
-
-    // 토스트 알림
-    function showToast(message, type = 'dark') {
-      const container = document.getElementById('toast-container');
-      const el = document.createElement('div');
-      const bgClass = type === 'error' ? 'bg-red-700' : type === 'success' ? 'bg-emerald-800' : 'bg-ink';
-      el.className = `${bgClass} text-white px-3.5 py-2.5 text-xs font-mono shadow-lg border border-white/15 transition-opacity duration-200 max-w-sm`;
+    // 커스텀 토스트 메시지
+    let toastTimer = null;
+    function showToast(message, type = 'info') {
+      const el = document.getElementById('toast-box');
       el.innerText = message;
-      container.appendChild(el);
-      setTimeout(() => {
-        el.style.opacity = '0';
-        setTimeout(() => el.remove(), 220);
-      }, 2800);
+      el.classList.remove('hidden', 'bg-ink', 'bg-red-700', 'bg-green-700');
+      if (type === 'error') el.classList.add('bg-red-700');
+      else if (type === 'success') el.classList.add('bg-green-700');
+      else el.classList.add('bg-ink');
+
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        el.classList.add('hidden');
+      }, 3400);
     }
 
-    // 커스텀 확인 대화상자
+    // 커스텀 확인 모달
     function showConfirm(title, message) {
       return new Promise((resolve) => {
         const modal = document.getElementById('confirm-modal');
@@ -460,14 +393,19 @@
         modal.classList.remove('hidden');
         modal.classList.add('flex');
 
+        const okBtn = document.getElementById('confirm-ok-btn');
+        const cancelBtn = document.getElementById('confirm-cancel-btn');
+
         const cleanup = (result) => {
           modal.classList.add('hidden');
           modal.classList.remove('flex');
+          okBtn.onclick = null;
+          cancelBtn.onclick = null;
           resolve(result);
         };
 
-        document.getElementById('confirm-ok-btn').onclick = () => cleanup(true);
-        document.getElementById('confirm-cancel-btn').onclick = () => cleanup(false);
+        okBtn.onclick = () => cleanup(true);
+        cancelBtn.onclick = () => cleanup(false);
       });
     }
 
@@ -477,21 +415,31 @@
 
     function isTauriEnv() {
       const t = getTauri();
-      return Boolean(t && t.fs && t.path);
+      return !!(t && t.core && t.core.invoke && t.path);
     }
 
-    async function getDataDir() {
-      if (!isTauriEnv()) {
-        return 'C:\\Users\\USER\\AppData\\Local\\ZALNET Suite\\data (Preview Mode)';
-      }
+    // 기본 설치 폴더 내 data 경로
+    async function getDefaultDataDir() {
+      if (!isTauriEnv()) return 'Browser LocalStorage (Web Preview Mode)';
       const tauri = getTauri();
       let base = await tauri.path.resourceDir();
       base = base.replace(/^\\\\\?\\/, '');
-      const dataDir = await tauri.path.join(base, 'data');
-      if (!(await tauri.fs.exists(dataDir))) {
-        await tauri.fs.mkdir(dataDir, { recursive: true });
+      return await tauri.path.join(base, 'data');
+    }
+
+    // 현재 활성 저장 폴더 경로 (사용자 지정 공유 폴더 우선)
+    async function getDataDir() {
+      if (!isTauriEnv()) return 'Browser LocalStorage (Web Preview Mode)';
+      const customDir = (window.localStorage.getItem(CUSTOM_DIR_KEY) || '').trim();
+      const targetDir = customDir || (await getDefaultDataDir());
+      try {
+        await getTauri().core.invoke('open_folder_silent_ensure', { path: targetDir });
+      } catch (e) {
+        if (getTauri().fs && getTauri().fs.mkdir) {
+          try { await getTauri().fs.mkdir(targetDir, { recursive: true }); } catch (_) {}
+        }
       }
-      return dataDir;
+      return targetDir;
     }
 
     async function getFilePath(subPath) {
@@ -500,50 +448,172 @@
       return await tauri.path.join(dataDir, subPath);
     }
 
-    function normalizeGitHubUrl(url) {
-      let clean = (url || '').trim();
-      if (clean.includes('github.com') && clean.includes('/blob/')) {
-        clean = clean
-          .replace('https://github.com/', 'https://raw.githubusercontent.com/')
-          .replace('http://github.com/', 'https://raw.githubusercontent.com/')
-          .replace('/blob/', '/');
+    // 네이티브 Rust 파일 읽기/쓰기 래퍼 (구글 드라이브/외부 경로 권한 제한 없이 동작 + 구버전 EXE 호환)
+    async function nativeReadText(fullPath) {
+      const tauri = getTauri();
+      try {
+        return await tauri.core.invoke('fs_read_text', { path: fullPath });
+      } catch (e) {
+        if (tauri.fs && tauri.fs.exists && await tauri.fs.exists(fullPath)) {
+          return await tauri.fs.readTextFile(fullPath);
+        }
+        throw e;
       }
-      return clean;
     }
 
-    function autoFillFromUrl(rawInput) {
-      const id = document.getElementById('edit-app-id').value;
-      if (id) return;
-      const normalized = normalizeGitHubUrl(rawInput);
+    async function nativeWriteText(fullPath, content) {
+      const tauri = getTauri();
       try {
-        const decoded = decodeURIComponent(normalized);
-        const fileName = (decoded.split('/').pop() || '').replace(/\.html?$/i, '');
-        if (fileName) {
-          const nameInput = document.getElementById('edit-app-name');
-          if (!nameInput.value.trim()) {
-            const cleanName = stripVersionText(fileName.replace(/_/g, ' '));
-            nameInput.value = cleanName || fileName;
-          }
-          const verMatch = fileName.match(/(?:ver(?:sion)?\.?\s*|v)(\d+(?:[._]\d+)+)/i);
-          if (verMatch) {
-            document.getElementById('edit-app-version').value = `V${verMatch[1].replace(/_/g, '.')}`;
-          }
+        await tauri.core.invoke('fs_write_text', { path: fullPath, content });
+      } catch (e) {
+        if (tauri.fs && tauri.fs.writeTextFile) {
+          await tauri.fs.writeTextFile(fullPath, content);
+          return;
         }
-      } catch (e) {}
+        throw e;
+      }
+    }
+
+    async function nativeListJson(dirPath) {
+      const tauri = getTauri();
+      try {
+        return await tauri.core.invoke('fs_list_json', { dir: dirPath });
+      } catch (e) {
+        if (tauri.fs && tauri.fs.readDir) {
+          if (!(await tauri.fs.exists(dirPath))) {
+            await tauri.fs.mkdir(dirPath, { recursive: true });
+          }
+          const entries = await tauri.fs.readDir(dirPath);
+          return entries.filter(item => item.name && item.name.endsWith('.json')).map(item => item.name);
+        }
+        return [];
+      }
+    }
+
+    async function nativeRemoveFile(fullPath) {
+      const tauri = getTauri();
+      try {
+        await tauri.core.invoke('fs_remove_file', { path: fullPath });
+      } catch (e) {
+        if (tauri.fs && tauri.fs.remove && await tauri.fs.exists(fullPath)) {
+          await tauri.fs.remove(fullPath);
+        }
+      }
+    }
+
+    // 저장 경로 사용자 지정 (구글 드라이브 / 원드라이브 / 공유 폴더 연동)
+    async function changeDataFolder() {
+      if (!isTauriEnv()) {
+        showToast('웹 프리뷰 모드에서는 브라우저 저장소를 사용합니다. EXE 설치 후 폴더 지정이 가능합니다.');
+        return;
+      }
+      const tauri = getTauri();
+      if (!tauri.dialog || !tauri.dialog.open) {
+        showToast('폴더 선택 대화상자를 사용하려면 최신 EXE로 한 번 빌드해 주세요.', 'error');
+        return;
+      }
+
+      try {
+        const selected = await tauri.dialog.open({
+          directory: true,
+          multiple: false,
+          title: '데이터 저장 폴더 선택 (구글 드라이브, 원드라이브, 공유 폴더 등)'
+        });
+        if (!selected || typeof selected !== 'string') return;
+
+        await flushAllPendingSavesAsync();
+        const prevAppsData = {};
+        for (const app of appsList) {
+          await preloadAppStorage(app.id);
+          prevAppsData[app.id] = storageCache[app.id] || {};
+        }
+
+        window.localStorage.setItem(CUSTOM_DIR_KEY, selected);
+
+        // 캐시 비우고 새 폴더에서 데이터 로드 시도
+        for (const key of Object.keys(storageCache)) delete storageCache[key];
+        for (const key of Object.keys(loadedSnapshotsCache)) delete loadedSnapshotsCache[key];
+
+        // 새 폴더가 비어 있다면 기존 작업 데이터를 새 폴더로 자동 복사 이관
+        const existingFiles = await nativeListJson(selected);
+        if (existingFiles.length === 0) {
+          await saveLauncherConfig();
+          for (const [appId, data] of Object.entries(prevAppsData)) {
+            storageCache[appId] = data;
+            await writeAppStorageNow(appId);
+          }
+          showToast('새 저장 폴더로 기존 데이터를 복사하고 연결했습니다.', 'success');
+        } else {
+          await loadLauncherConfig();
+          for (const app of appsList) {
+            await preloadAppStorage(app.id);
+            if (runningAppIds.has(app.id)) {
+              await openOrSwitchApp(app.id, true);
+            }
+          }
+          showToast('선택한 폴더의 기존 데이터를 불러왔습니다.', 'success');
+        }
+
+        renderQuickTabs();
+        await renderDashboard();
+        const modalPathEl = document.getElementById('modal-data-path');
+        if (modalPathEl) modalPathEl.innerText = await getDataDir();
+        await renderBackupList();
+        await renderAppResetList();
+      } catch (e) {
+        showToast(`저장 경로 변경 오류: ${e}`, 'error');
+      }
+    }
+
+    async function resetDataFolder() {
+      const ok = await showConfirm('기본 저장 경로 복원', '데이터 저장 위치를 기본 설치 폴더(data/)로 되돌릴까요?');
+      if (!ok) return;
+
+      await flushAllPendingSavesAsync();
+      window.localStorage.removeItem(CUSTOM_DIR_KEY);
+      for (const key of Object.keys(storageCache)) delete storageCache[key];
+      for (const key of Object.keys(loadedSnapshotsCache)) delete loadedSnapshotsCache[key];
+
+      await loadLauncherConfig();
+      for (const app of appsList) {
+        await preloadAppStorage(app.id);
+        if (runningAppIds.has(app.id)) {
+          await openOrSwitchApp(app.id, true);
+        }
+      }
+      renderQuickTabs();
+      await renderDashboard();
+      const modalPathEl = document.getElementById('modal-data-path');
+      if (modalPathEl) modalPathEl.innerText = await getDataDir();
+      await renderBackupList();
+      await renderAppResetList();
+      showToast('기본 저장 경로로 복원되었습니다.', 'success');
+    }
+
+    function stripVersionFromName(rawName) {
+      return (rawName || '').replace(/\s*(?:ver(?:sion)?\.?\s*|v)\d+(?:[._]\d+)+$/i, '').trim();
+    }
+
+    function extractTitleFromHtml(htmlCode) {
+      const titleMatch = htmlCode.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+      if (titleMatch && titleMatch[1]) {
+        return stripVersionFromName(titleMatch[1].replace(/<[^>]+>/g, '').trim());
+      }
+      return '';
     }
 
     function detectVersionFromHtml(htmlCode, rawUrl) {
       const metaMatch = htmlCode.match(/<meta[^>]+name=["']version["'][^>]+content=["']([^"']+)["']/i);
       if (metaMatch && metaMatch[1]) {
         const clean = metaMatch[1].trim().replace(/^v/i, '');
-        return `V${clean.toUpperCase()}`;
+        return 'V' + clean.toUpperCase();
       }
 
       const titleMatch = htmlCode.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
       if (titleMatch) {
         const verInTitle = titleMatch[1].match(/(?:ver(?:sion)?\.?\s*|v)(\d+(?:[._]\d+)+)/i);
         if (verInTitle) {
-          return `V${verInTitle[1].replace(/_/g, '.')}`;
+          return 'V' + verInTitle[1].replace(/_/g, '.');
         }
       }
 
@@ -552,7 +622,7 @@
         const textOnly = block.replace(/<[^>]+>/g, ' ').trim();
         const verMatch = textOnly.match(/(?:ver(?:sion)?\.?\s*|v)(\d+(?:[._]\d+)+)/i);
         if (verMatch) {
-          return `V${verMatch[1].replace(/_/g, '.')}`;
+          return 'V' + verMatch[1].replace(/_/g, '.');
         }
       }
 
@@ -561,57 +631,59 @@
         const fileName = decodedUrl.split('/').pop() || '';
         const fileVer = fileName.match(/(?:ver(?:sion)?\.?\s*|v)(\d+(?:[._]\d+)+)/i);
         if (fileVer) {
-          return `V${fileVer[1].replace(/_/g, '.')}`;
+          return 'V' + fileVer[1].replace(/_/g, '.');
         }
       } catch (e) {}
 
       return null;
     }
 
-    // GitHub API 호출 제한 방어 (15분 로컬 캐싱 + 403 감지)
-    async function fetchGitHubLastUpdated(rawUrl, forceRefresh = false) {
-      let metaCache = {};
+    function toRawGitHubUrl(url) {
+      let clean = (url || '').trim();
+      if (clean.includes('github.com/') && clean.includes('/blob/')) {
+        clean = clean
+          .replace('https://github.com/', 'https://raw.githubusercontent.com/')
+          .replace('http://github.com/', 'https://raw.githubusercontent.com/')
+          .replace('/blob/', '/');
+      }
+      return clean;
+    }
+
+    async function fetchGitHubLastUpdated(rawUrl, bypassCache = false) {
+      const CACHE_TTL = 15 * 60 * 1000;
+      let cacheMap = {};
       try {
-        metaCache = JSON.parse(window.localStorage.getItem(GH_META_CACHE_KEY) || '{}');
+        cacheMap = JSON.parse(window.localStorage.getItem('zalnet_gh_meta_cache') || '{}');
       } catch (e) {}
 
-      const cached = metaCache[rawUrl];
-      if (!forceRefresh && cached && (Date.now() - cached.fetchedAt < GH_META_TTL_MS)) {
-        return cached.dateStr;
-      }
-      if (ghApiRateLimited) {
-        return cached ? cached.dateStr : null;
+      if (!bypassCache && cacheMap[rawUrl] && (Date.now() - cacheMap[rawUrl].ts < CACHE_TTL)) {
+        return cacheMap[rawUrl].date;
       }
 
       try {
         const match = rawUrl.match(/^https:\/\/raw\.githubusercontent\.com\/([^/]+)\/([^/]+)\/([^/]+)\/(.+)$/);
-        if (!match) return cached ? cached.dateStr : null;
+        if (!match) return null;
         const [, owner, repo, branch, encodedPath] = match;
         const apiUrl = `https://api.github.com/repos/${owner}/${repo}/commits?sha=${branch}&path=${encodedPath}&per_page=1`;
         const res = await fetch(apiUrl);
-        if (res.status === 403 || res.status === 429) {
-          ghApiRateLimited = true;
-          return cached ? cached.dateStr : null;
-        }
-        if (!res.ok) return cached ? cached.dateStr : null;
-
+        if (!res.ok) return cacheMap[rawUrl]?.date || null;
         const commits = await res.json();
-        if (Array.isArray(commits) && commits[0]?.commit?.committer?.date) {
+        if (Array.isArray(commits) && commits[0] && commits[0].commit && commits[0].commit.committer && commits[0].commit.committer.date) {
           const date = new Date(commits[0].commit.committer.date);
-          const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-          metaCache[rawUrl] = { dateStr, fetchedAt: Date.now() };
+          const formatted = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+          cacheMap[rawUrl] = { date: formatted, ts: Date.now() };
           try {
-            window.localStorage.setItem(GH_META_CACHE_KEY, JSON.stringify(metaCache));
+            window.localStorage.setItem('zalnet_gh_meta_cache', JSON.stringify(cacheMap));
           } catch (e) {}
-          return dateStr;
+          return formatted;
         }
       } catch (e) {}
-      return cached ? cached.dateStr : null;
+      return cacheMap[rawUrl]?.date || null;
     }
 
-    async function syncAllMetadataFromGitHub(isManual = false) {
+    async function syncAllMetadataFromGitHub(showSpin = false) {
       const btn = document.getElementById('btn-sync-all');
-      if (isManual && btn) btn.classList.add('rotate-180');
+      if (showSpin && btn) btn.classList.add('rotate-180');
 
       let updatedAny = false;
       await Promise.all(appsList.map(async (app) => {
@@ -628,7 +700,7 @@
               updatedAny = true;
             }
           }
-          const lastDate = await fetchGitHubLastUpdated(app.rawUrl, isManual);
+          const lastDate = await fetchGitHubLastUpdated(app.rawUrl, showSpin);
           if (lastDate && app.lastUpdated !== lastDate) {
             app.lastUpdated = lastDate;
             updatedAny = true;
@@ -644,108 +716,92 @@
         await saveLauncherConfig();
       }
       await renderDashboard();
-      if (isManual && btn) {
-        showToast('GitHub 최신 버전 동기화 완료');
-        setTimeout(() => btn.classList.remove('rotate-180'), 350);
+      if (showSpin) {
+        showToast('GitHub 최신 버전 및 업데이트 정보를 동기화했습니다.');
+        if (btn) setTimeout(() => btn.classList.remove('rotate-180'), 300);
       }
     }
 
-    // 런처 설정 로드
     async function loadLauncherConfig() {
-      let loadedConfig = null;
+      let loadedApps = null;
 
       if (isTauriEnv()) {
         try {
           const cfgPath = await getFilePath('launcher_config.json');
-          const tauri = getTauri();
-          if (await tauri.fs.exists(cfgPath)) {
-            const raw = await tauri.fs.readTextFile(cfgPath);
-            loadedConfig = JSON.parse(raw);
+          const raw = await nativeReadText(cfgPath);
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed.apps) && parsed.apps.length > 0) {
+            loadedApps = parsed.apps;
           }
-        } catch (e) {
-          console.warn('Tauri 설정 로드 경고:', e);
-        }
-      }
-
-      if (!loadedConfig) {
-        try {
-          const localRaw = window.localStorage.getItem('zalnet_launcher_config');
-          if (localRaw) loadedConfig = JSON.parse(localRaw);
         } catch (e) {}
       }
 
-      if (loadedConfig && Array.isArray(loadedConfig.apps) && loadedConfig.apps.length > 0) {
-        appsList = loadedConfig.apps;
-        deletedDefaultIds = Array.isArray(loadedConfig.deletedDefaultIds) ? loadedConfig.deletedDefaultIds : [];
-
-        let updated = false;
-        for (const app of appsList) {
-          const cleaned = stripVersionText(app.name);
-          if (cleaned && cleaned !== app.name) {
-            app.name = cleaned;
-            updated = true;
+      if (!loadedApps) {
+        try {
+          const rawLocal = window.localStorage.getItem('zalnet_launcher_config');
+          if (rawLocal) {
+            const parsed = JSON.parse(rawLocal);
+            if (Array.isArray(parsed.apps) && parsed.apps.length > 0) {
+              loadedApps = parsed.apps;
+            }
           }
-        }
-
-        for (const defApp of DEFAULT_APPS) {
-          const existsInList = appsList.some(a => a.id === defApp.id || a.rawUrl === defApp.rawUrl);
-          const wasDeleted = deletedDefaultIds.includes(defApp.id);
-          if (!existsInList && !wasDeleted) {
-            appsList.push(JSON.parse(JSON.stringify(defApp)));
-            updated = true;
-          }
-        }
-        if (updated) await saveLauncherConfig();
-        return;
+        } catch (e) {}
       }
 
-      appsList = JSON.parse(JSON.stringify(DEFAULT_APPS));
-      await saveLauncherConfig();
+      if (loadedApps) {
+        const existingIds = new Set(loadedApps.map(a => a.id));
+        for (const defApp of DEFAULT_APPS) {
+          if (!existingIds.has(defApp.id)) {
+            loadedApps.push(JSON.parse(JSON.stringify(defApp)));
+          }
+        }
+        loadedApps.forEach(app => {
+          app.name = stripVersionFromName(app.name) || app.name;
+        });
+        appsList = loadedApps;
+        await saveLauncherConfig();
+      } else {
+        appsList = JSON.parse(JSON.stringify(DEFAULT_APPS));
+        await saveLauncherConfig();
+      }
     }
 
     async function saveLauncherConfig() {
-      const payload = JSON.stringify({ apps: appsList, deletedDefaultIds }, null, 2);
+      const jsonStr = JSON.stringify({ apps: appsList }, null, 2);
       try {
-        window.localStorage.setItem('zalnet_launcher_config', payload);
+        window.localStorage.setItem('zalnet_launcher_config', jsonStr);
       } catch (e) {}
 
       if (isTauriEnv()) {
         try {
           const cfgPath = await getFilePath('launcher_config.json');
-          const tauri = getTauri();
-          await tauri.fs.writeTextFile(cfgPath, payload);
+          await nativeWriteText(cfgPath, jsonStr);
         } catch (e) {
-          console.error('Tauri 설정 저장 오류:', e);
+          console.error('설정 파일 저장 실패:', e);
         }
       }
     }
 
-    // 앱별 로컬 데이터 로드
     async function preloadAppStorage(appId) {
+      if (storageCache[appId]) return;
+
       if (isTauriEnv()) {
         try {
           const filePath = await getFilePath(`${appId}_storage.json`);
-          const tauri = getTauri();
-          if (await tauri.fs.exists(filePath)) {
-            const content = await tauri.fs.readTextFile(filePath);
-            storageCache[appId] = JSON.parse(content);
-            return;
-          }
+          const content = await nativeReadText(filePath);
+          storageCache[appId] = JSON.parse(content);
+          return;
         } catch (e) {}
       }
 
       try {
-        const localSaved = window.localStorage.getItem(`zalnet_app_data_${appId}`);
-        if (localSaved) {
-          storageCache[appId] = JSON.parse(localSaved);
-          return;
-        }
-      } catch (e) {}
-
-      storageCache[appId] = storageCache[appId] || {};
+        const rawLocal = window.localStorage.getItem(`zalnet_app_data_${appId}`);
+        storageCache[appId] = rawLocal ? JSON.parse(rawLocal) : {};
+      } catch (e) {
+        storageCache[appId] = {};
+      }
     }
 
-    // 디스크 즉시 기록 헬퍼
     async function writeAppStorageNow(appId) {
       const jsonStr = JSON.stringify(storageCache[appId] || {}, null, 2);
       try {
@@ -755,8 +811,7 @@
       if (isTauriEnv()) {
         try {
           const filePath = await getFilePath(`${appId}_storage.json`);
-          const tauri = getTauri();
-          await tauri.fs.writeTextFile(filePath, jsonStr);
+          await nativeWriteText(filePath, jsonStr);
         } catch (e) {
           console.error(`[${appId}] 디스크 저장 실패:`, e);
         }
@@ -771,71 +826,96 @@
       }, 200);
     }
 
-    // 대기 중인 모든 디스크 저장 즉시 플러시
-    async function flushAllPendingSaves() {
-      const pendingIds = Object.keys(saveTimers);
-      for (const appId of pendingIds) {
+    async function flushAllPendingSavesAsync() {
+      const promises = [];
+      for (const appId of Object.keys(saveTimers)) {
         clearTimeout(saveTimers[appId]);
         delete saveTimers[appId];
-        await writeAppStorageNow(appId);
+        promises.push(writeAppStorageNow(appId));
       }
+      await Promise.all(promises);
     }
 
     window.addEventListener('beforeunload', () => {
-      flushAllPendingSaves();
+      flushAllPendingSavesAsync();
+    });
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') flushAllPendingSavesAsync();
     });
 
-    // iframe 메시지 수신 (데이터 동기화 및 단축키 전달)
-    window.addEventListener('message', (event) => {
+    // iframe 메시지 수신 (데이터 동기화, 단축키, 외부 브라우저 링크 열기)
+    window.addEventListener('message', async (event) => {
       const msg = event.data;
       if (!msg) return;
-
       if (msg.type === 'SYNC_LOCAL_STORAGE') {
         storageCache[msg.appId] = msg.data;
         syncToDisk(msg.appId);
-      } else if (msg.type === 'SHORTCUT_FROM_FRAME') {
-        handleGlobalShortcut(msg.key, msg.ctrlKey);
+      } else if (msg.type === 'LAUNCHER_SHORTCUT') {
+        handleLauncherShortcut(msg.key, msg.ctrlOrMeta);
+      } else if (msg.type === 'OPEN_EXTERNAL_URL' && msg.url) {
+        if (isTauriEnv()) {
+          try {
+            await getTauri().core.invoke('open_external_url', { url: msg.url });
+            showToast('기본 웹 브라우저로 외부 링크를 열었습니다.');
+          } catch (e) {
+            window.open(msg.url, '_blank', 'noopener,noreferrer');
+          }
+        } else {
+          window.open(msg.url, '_blank', 'noopener,noreferrer');
+        }
       }
     });
 
-    // iframe 내부에 주입할 브릿지 스크립트 (개별 앱 데이터 격리 저장 + 단축키 포워딩, 앱 간 공유 없음)
+    // iframe 주입 브릿지 (localStorage 가로채기 + 단축키 + 외부 http 링크 기본 브라우저 전환)
     function createBridgeScript(appId, initialData) {
       const serialized = JSON.stringify(initialData).replace(/<\/script>/gi, '<\\/script>');
-      return `
-        <script>
-          (function() {
-            const APP_ID = "${appId}";
-            const store = ${serialized};
-            function notifyParent() {
-              window.parent.postMessage({ type: 'SYNC_LOCAL_STORAGE', appId: APP_ID, data: store }, '*');
-            }
-            const customStorage = {
-              getItem: (k) => Object.prototype.hasOwnProperty.call(store, k) ? store[k] : null,
-              setItem: (k, v) => { store[k] = String(v); notifyParent(); },
-              removeItem: (k) => { delete store[k]; notifyParent(); },
-              clear: () => { for (const k in store) delete store[k]; notifyParent(); },
-              key: (i) => Object.keys(store)[i] || null,
-              get length() { return Object.keys(store).length; }
-            };
-            try {
-              Object.defineProperty(window, 'localStorage', { value: customStorage, configurable: true, writable: true });
-            } catch (e) {}
-
-            // iframe 내부 포커스 상태에서도 F11, ESC, Ctrl+0~9 단축키를 런처로 전달
-            window.addEventListener('keydown', function(e) {
-              if (e.key === 'F11' || e.key === 'Escape' || (e.ctrlKey && !e.altKey && !e.shiftKey && /^[0-9]$/.test(e.key))) {
-                if (e.key === 'F11' || (e.ctrlKey && /^[0-9]$/.test(e.key))) {
-                  e.preventDefault();
-                }
-                window.parent.postMessage({ type: 'SHORTCUT_FROM_FRAME', key: e.key, ctrlKey: e.ctrlKey }, '*');
-              }
-            });
-          })();
-        <\/script>
-      `;
+      return [
+        '<scr' + 'ipt>',
+        '(function() {',
+        '  const APP_ID = ' + JSON.stringify(appId) + ';',
+        '  const store = ' + serialized + ';',
+        '  function notifyParent() {',
+        '    window.parent.postMessage({ type: "SYNC_LOCAL_STORAGE", appId: APP_ID, data: store }, "*");',
+        '  }',
+        '  const customStorage = {',
+        '    getItem: function(k) { return Object.prototype.hasOwnProperty.call(store, k) ? store[k] : null; },',
+        '    setItem: function(k, v) { store[k] = String(v); notifyParent(); },',
+        '    removeItem: function(k) { delete store[k]; notifyParent(); },',
+        '    clear: function() { for (const k in store) delete store[k]; notifyParent(); },',
+        '    key: function(i) { return Object.keys(store)[i] || null; },',
+        '    get length() { return Object.keys(store).length; }',
+        '  };',
+        '  try {',
+        '    Object.defineProperty(window, "localStorage", { value: customStorage, configurable: true, writable: true });',
+        '  } catch (e) {}',
+        '  window.addEventListener("keydown", function(e) {',
+        '    const ctrlOrMeta = e.ctrlKey || e.metaKey;',
+        '    if (e.key === "F11" || e.key === "Escape" || (ctrlOrMeta && /^[0-9]$/.test(e.key))) {',
+        '      if (e.key === "F11" || (ctrlOrMeta && /^[0-9]$/.test(e.key))) e.preventDefault();',
+        '      window.parent.postMessage({ type: "LAUNCHER_SHORTCUT", key: e.key, ctrlOrMeta: ctrlOrMeta }, "*");',
+        '    }',
+        '  });',
+        '  document.addEventListener("click", function(e) {',
+        '    const anchor = e.target && e.target.closest ? e.target.closest("a") : null;',
+        '    if (anchor && anchor.href && /^https?:\\/\\//i.test(anchor.href)) {',
+        '      e.preventDefault();',
+        '      e.stopPropagation();',
+        '      window.parent.postMessage({ type: "OPEN_EXTERNAL_URL", url: anchor.href }, "*");',
+        '    }',
+        '  }, true);',
+        '  const origOpen = window.open;',
+        '  window.open = function(url) {',
+        '    if (typeof url === "string" && /^https?:\\/\\//i.test(url)) {',
+        '      window.parent.postMessage({ type: "OPEN_EXTERNAL_URL", url: url }, "*");',
+        '      return null;',
+        '    }',
+        '    return origOpen ? origOpen.apply(window, arguments) : null;',
+        '  };',
+        '})();',
+        '</scr' + 'ipt>'
+      ].join('\n');
     }
 
-    // 프로그램 열기 및 전환 (상태 보존)
     async function openOrSwitchApp(appId, forceReload = false) {
       const app = appsList.find(a => a.id === appId);
       if (!app) return;
@@ -853,9 +933,7 @@
       try {
         await preloadAppStorage(appId);
         const response = await fetch(`${app.rawUrl}?t=${Date.now()}`);
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status} (저장소 Public 설정 및 주소를 확인하세요)`);
-        }
+        if (!response.ok) throw new Error(`HTTP ${response.status} (저장소 Public 설정 확인 필요)`);
         let htmlCode = await response.text();
 
         const detectedVer = detectVersionFromHtml(htmlCode, app.rawUrl);
@@ -866,9 +944,11 @@
 
         const bridgeTag = createBridgeScript(appId, storageCache[appId] || {});
         if (/<head[^>]*>/i.test(htmlCode)) {
-          htmlCode = htmlCode.replace(/<head[^>]*>/i, m => `${m}\n${bridgeTag}`);
+          htmlCode = htmlCode.replace(/<head[^>]*>/i, function(m) {
+            return m + '\n' + bridgeTag;
+          });
         } else {
-          htmlCode = bridgeTag + htmlCode;
+          htmlCode = bridgeTag + '\n' + htmlCode;
         }
 
         if (!iframe) {
@@ -878,58 +958,43 @@
           container.appendChild(iframe);
         }
 
-        if (blobUrls[appId]) {
-          URL.revokeObjectURL(blobUrls[appId]);
-        }
+        if (blobUrls[appId]) URL.revokeObjectURL(blobUrls[appId]);
         blobUrls[appId] = URL.createObjectURL(new Blob([htmlCode], { type: 'text/html;charset=utf-8' }));
         iframe.src = blobUrls[appId];
 
         runningAppIds.add(appId);
         activateView(appId);
+        showToast(`[${app.name}] 실행 완료`, 'success');
       } catch (err) {
         showToast(`로드 실패 (${app.name}): ${err.message}`, 'error');
       }
     }
 
-    // 상단 헤더에서 현재 실행 중인 앱 즉시 새로고침
-    async function reloadCurrentActiveApp() {
-      if (!activeViewId || activeViewId === 'dashboard') return;
-      const app = appsList.find(a => a.id === activeViewId);
-      if (!app) return;
-
-      const ok = await showConfirm(
-        '현재 앱 새로고침',
-        `'${app.name}' 화면을 GitHub의 최신 코드로 다시 불러올까요?\n(저장된 데이터는 유지되며, 저장하지 않은 임시 화면 상태만 초기화됩니다.)`
-      );
-      if (!ok) return;
-      await openOrSwitchApp(activeViewId, true);
-    }
-
-    // 실행 중인 프로그램 종료
-    async function closeRunningApp(appId) {
-      if (!appId || appId === 'dashboard') return;
-      await flushAllPendingSaves();
-
+    async function closeRunningApp(appId, event) {
+      if (event) event.stopPropagation();
       const app = appsList.find(a => a.id === appId);
-      runningAppIds.delete(appId);
+      if (!app || !runningAppIds.has(appId)) return;
 
-      const frame = document.getElementById(`frame-${appId}`);
-      if (frame) frame.remove();
+      await flushAllPendingSavesAsync();
+
+      const iframe = document.getElementById(`frame-${appId}`);
+      if (iframe) iframe.remove();
 
       if (blobUrls[appId]) {
         URL.revokeObjectURL(blobUrls[appId]);
         delete blobUrls[appId];
       }
 
-      if (app) {
-        showToast(`[${app.name}] 프로그램이 닫혔습니다.`);
-      }
+      runningAppIds.delete(appId);
+      showToast(`[${app.name}] 프로그램을 닫았습니다.`);
 
       if (activeViewId === appId) {
         showDashboard();
       } else {
         renderQuickTabs();
-        renderDashboard();
+        if (activeViewId === 'dashboard') {
+          renderDashboard();
+        }
       }
     }
 
@@ -942,24 +1007,28 @@
       if (viewId === 'dashboard') {
         dashboard.classList.remove('hidden');
         document.querySelectorAll('.app-frame').forEach(f => f.classList.remove('active'));
-        [closeCurrentBtn, reloadCurrentBtn].forEach(btn => {
-          if (btn) {
-            btn.classList.add('hidden');
-            btn.classList.remove('flex');
-          }
-        });
+        if (closeCurrentBtn) {
+          closeCurrentBtn.classList.add('hidden');
+          closeCurrentBtn.classList.remove('flex');
+        }
+        if (reloadCurrentBtn) {
+          reloadCurrentBtn.classList.add('hidden');
+          reloadCurrentBtn.classList.remove('flex');
+        }
         renderDashboard();
       } else {
         dashboard.classList.add('hidden');
         document.querySelectorAll('.app-frame').forEach(f => {
           f.classList.toggle('active', f.id === `frame-${viewId}`);
         });
-        [closeCurrentBtn, reloadCurrentBtn].forEach(btn => {
-          if (btn) {
-            btn.classList.remove('hidden');
-            btn.classList.add('flex');
-          }
-        });
+        if (closeCurrentBtn) {
+          closeCurrentBtn.classList.remove('hidden');
+          closeCurrentBtn.classList.add('flex');
+        }
+        if (reloadCurrentBtn) {
+          reloadCurrentBtn.classList.remove('hidden');
+          reloadCurrentBtn.classList.add('flex');
+        }
       }
       renderQuickTabs();
     }
@@ -968,30 +1037,12 @@
       activateView('dashboard');
     }
 
-    // 카드 순서 이동 (사용자 지정 순서 모드)
-    async function moveAppOrder(appId, direction) {
-      const idx = appsList.findIndex(a => a.id === appId);
-      if (idx === -1) return;
-      const targetIdx = idx + direction;
-      if (targetIdx < 0 || targetIdx >= appsList.length) return;
-
-      const temp = appsList[idx];
-      appsList[idx] = appsList[targetIdx];
-      appsList[targetIdx] = temp;
-
-      await saveLauncherConfig();
-      renderQuickTabs();
-      renderDashboard();
-    }
-
-    // 상단 빠른 전환 탭 렌더링
     function renderQuickTabs() {
       const nav = document.getElementById('quick-tabs');
       nav.innerHTML = '';
 
       const homeBtn = document.createElement('button');
       homeBtn.type = 'button';
-      homeBtn.title = '런처 홈 (Ctrl+0)';
       homeBtn.className = `h-[30px] px-3 text-xs font-mono font-semibold border transition-colors shrink-0 ${
         activeViewId === 'dashboard'
           ? 'bg-ink text-white border-ink'
@@ -1001,83 +1052,54 @@
       homeBtn.onclick = showDashboard;
       nav.appendChild(homeBtn);
 
-      appsList.forEach((app, index) => {
+      appsList.forEach(app => {
         const isRunning = runningAppIds.has(app.id);
         const isActive = activeViewId === app.id;
-        const shortcutHint = index < 9 ? ` (Ctrl+${index + 1})` : '';
-        const tab = document.createElement('div');
-        tab.setAttribute('role', 'button');
-        tab.setAttribute('tabindex', '0');
-        tab.title = `${app.name}${shortcutHint}`;
-        tab.className = `h-[30px] px-2.5 text-xs border transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer ${
+        const tabWrap = document.createElement('div');
+        tabWrap.className = `h-[30px] flex items-center border transition-colors shrink-0 ${
           isActive
             ? 'bg-ink text-white border-ink font-semibold'
             : 'bg-transparent text-inksec border-transparent hover:bg-subtle hover:text-ink'
         }`;
-        tab.onclick = () => openOrSwitchApp(app.id, false);
-        tab.onkeydown = (e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            openOrSwitchApp(app.id, false);
-          }
-        };
+
+        const openBtn = document.createElement('button');
+        openBtn.type = 'button';
+        openBtn.className = 'h-full px-2.5 text-xs flex items-center gap-1.5';
+        openBtn.innerHTML = `${isRunning ? '<span class="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span>' : ''}<span>${app.name}</span>`;
+        openBtn.onclick = () => openOrSwitchApp(app.id, false);
+        tabWrap.appendChild(openBtn);
 
         if (isRunning) {
-          const dot = document.createElement('span');
-          dot.className = 'w-1.5 h-1.5 rounded-full bg-green-500 inline-block shrink-0';
-          tab.appendChild(dot);
+          const closeTabBtn = document.createElement('button');
+          closeTabBtn.type = 'button';
+          closeTabBtn.title = `${app.name} 닫기`;
+          closeTabBtn.className = `h-full px-1.5 text-[11px] opacity-65 hover:opacity-100 ${isActive ? 'hover:bg-white/20' : 'hover:bg-black/10'}`;
+          closeTabBtn.innerText = '×';
+          closeTabBtn.onclick = (e) => closeRunningApp(app.id, e);
+          tabWrap.appendChild(closeTabBtn);
         }
 
-        const label = document.createElement('span');
-        label.innerText = app.name;
-        tab.appendChild(label);
-
-        if (isRunning) {
-          const closeBtn = document.createElement('button');
-          closeBtn.type = 'button';
-          closeBtn.title = `${app.name} 닫기`;
-          closeBtn.innerText = '×';
-          closeBtn.className = `ml-1 w-4 h-4 flex items-center justify-center text-[13px] leading-none transition-colors ${
-            isActive
-              ? 'text-white/75 hover:text-white hover:bg-white/20'
-              : 'text-inkmuted hover:text-red-600 hover:bg-red-50'
-          }`;
-          closeBtn.onclick = (e) => {
-            e.stopPropagation();
-            closeRunningApp(app.id);
-          };
-          tab.appendChild(closeBtn);
-        }
-
-        nav.appendChild(tab);
+        nav.appendChild(tabWrap);
       });
     }
 
-    // 대시보드 그리드 렌더링
     async function renderDashboard() {
       const grid = document.getElementById('apps-grid');
       const keyword = document.getElementById('search-input').value.trim().toLowerCase();
       const sortBy = document.getElementById('sort-select').value;
-      const canReorder = sortBy === 'custom' && !keyword && currentFilter === 'all';
 
       document.getElementById('total-count').innerText = appsList.length;
       document.getElementById('running-count').innerText = runningAppIds.size;
 
       const dataDir = await getDataDir();
-      document.getElementById('data-path-preview').innerText = isTauriEnv()
-        ? `DATA DIR: ${dataDir}`
-        : `STORAGE: BROWSER / TAURI AUTO-BRIDGE READY`;
+      const hasCustomDir = !!(window.localStorage.getItem(CUSTOM_DIR_KEY) || '').trim();
+      document.getElementById('data-path-preview').innerText = `${hasCustomDir ? 'CUSTOM DIR' : 'DATA DIR'}: ${dataDir}`;
+      const resetPathBtn = document.getElementById('btn-reset-path');
+      if (resetPathBtn) resetPathBtn.classList.toggle('hidden', !hasCustomDir);
 
       let filtered = appsList.filter(app => {
         if (currentFilter === 'running' && !runningAppIds.has(app.id)) return false;
-        if (
-          keyword &&
-          !app.name.toLowerCase().includes(keyword) &&
-          !(app.desc || '').toLowerCase().includes(keyword) &&
-          !(app.subtitle || '').toLowerCase().includes(keyword)
-        ) {
-          return false;
-        }
+        if (keyword && !app.name.toLowerCase().includes(keyword) && !(app.desc || '').toLowerCase().includes(keyword)) return false;
         return true;
       });
 
@@ -1088,27 +1110,20 @@
       grid.innerHTML = '';
 
       if (filtered.length === 0) {
-        grid.innerHTML = `
-          <div class="col-span-full bg-surface border border-line p-10 text-center">
-            <p class="text-sm text-inksec mb-3">표시할 프로그램이 없습니다.</p>
-            <button type="button" onclick="setFilter('all'); document.getElementById('search-input').value=''; renderDashboard();" class="h-8 px-4 bg-ink text-white text-xs font-mono">
-              SHOW ALL APPS
-            </button>
-          </div>
-        `;
+        grid.innerHTML = `<div class="col-span-full bg-surface border border-line p-8 text-center text-xs text-inkmuted">표시할 프로그램이 없습니다.</div>`;
         return;
       }
 
-      for (let i = 0; i < filtered.length; i++) {
-        const app = filtered[i];
+      for (const app of filtered) {
         await preloadAppStorage(app.id);
         const isRunning = runningAppIds.has(app.id);
         const dataObj = storageCache[app.id] || {};
         const dataKeys = Object.keys(dataObj).length;
         const dataBytes = new Blob([JSON.stringify(dataObj)]).size;
         const sizeLabel = dataKeys > 0 ? `${(dataBytes / 1024).toFixed(1)} KB (${dataKeys}항목)` : '저장 데이터 없음';
-        const globalIdx = appsList.findIndex(a => a.id === app.id);
-        const shortcutTag = globalIdx >= 0 && globalIdx < 9 ? `CTRL+${globalIdx + 1}` : '';
+        const appIndex = appsList.findIndex(a => a.id === app.id);
+        const canReorder = sortBy === 'custom' && !keyword && currentFilter === 'all';
+        const shortcutHint = appIndex >= 0 && appIndex < 9 ? `Ctrl+${appIndex + 1}` : '';
 
         const card = document.createElement('div');
         card.className = 'bg-surface border border-line hover:border-[#888884] transition-colors flex flex-col';
@@ -1116,13 +1131,13 @@
           <div class="flex justify-between items-center px-3.5 py-2 border-b border-linelight font-mono text-[10px] text-inksec">
             <div class="flex items-center gap-2">
               <span class="font-semibold text-ink">${app.version || 'V1.0'}</span>
-              ${shortcutTag ? `<span class="text-inkmuted">[${shortcutTag}]</span>` : ''}
+              ${shortcutHint ? `<span class="text-inkmuted">[${shortcutHint}]</span>` : ''}
               ${isRunning ? `<span class="text-green-600 font-bold flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-green-600 inline-block"></span>RUNNING</span>` : ''}
             </div>
             <div class="flex items-center gap-1.5">
               ${canReorder ? `
-                <button type="button" onclick="moveAppOrder('${app.id}', -1)" ${i === 0 ? 'disabled' : ''} title="앞으로 이동" class="px-1 border border-linelight hover:border-ink disabled:opacity-30 disabled:pointer-events-none">◀</button>
-                <button type="button" onclick="moveAppOrder('${app.id}', 1)" ${i === filtered.length - 1 ? 'disabled' : ''} title="뒤로 이동" class="px-1 border border-linelight hover:border-ink disabled:opacity-30 disabled:pointer-events-none">▶</button>
+                <button type="button" onclick="moveAppOrder('${app.id}', -1)" ${appIndex === 0 ? 'disabled' : ''} title="앞으로 이동" class="px-1 border border-linelight bg-canvas hover:bg-subtle disabled:opacity-30">◀</button>
+                <button type="button" onclick="moveAppOrder('${app.id}', 1)" ${appIndex === appsList.length - 1 ? 'disabled' : ''} title="뒤로 이동" class="px-1 border border-linelight bg-canvas hover:bg-subtle disabled:opacity-30">▶</button>
               ` : ''}
               <button type="button" onclick="openAppEditModal('${app.id}')" class="hover:text-ink hover:underline ml-1">GITHUB ↗</button>
             </div>
@@ -1134,20 +1149,20 @@
               </div>
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-1.5 flex-wrap">
-                  <span class="text-base font-bold text-ink tracking-tight truncate">${app.name}</span>
+                  <span class="text-[16px] font-bold text-ink tracking-[-0.02em]">${app.name}</span>
                   <span class="font-mono text-[9px] bg-subtle border border-linelight text-inksec px-1.5 py-0.5 tracking-[0.04em]">BY ZALNET</span>
                 </div>
                 <div class="text-xs text-inksec mt-0.5 truncate">${app.subtitle || 'Web Automation Tool'}</div>
               </div>
             </div>
-            <p class="text-xs text-inksec leading-relaxed line-clamp-2">${app.desc || ''}</p>
+            <p class="text-xs text-inksec leading-relaxed">${app.desc || ''}</p>
             <div class="mt-auto pt-1 flex flex-col gap-0.5 font-mono text-[10px] text-inkmuted">
               <span>Local JSON: ${sizeLabel}</span>
-              ${app.lastUpdated ? `<span>Last updated: ${app.lastUpdated}</span>` : `<span>Source: GitHub Raw Sync</span>`}
+              ${app.lastUpdated ? `<span>Last updated: ${app.lastUpdated}</span>` : ''}
             </div>
           </div>
           <div class="px-3.5 pb-3.5 flex gap-1.5">
-            <button type="button" onclick="openOrSwitchApp('${app.id}', false)" class="flex-1 h-8 border font-mono text-[11px] font-semibold tracking-[0.08em] transition-colors ${
+            <button type="button" onclick="openOrSwitchApp('${app.id}', false)" class="flex-1 h-8 font-mono text-[11px] font-semibold tracking-[0.08em] border transition-colors ${
               isRunning
                 ? 'bg-ink text-white border-ink hover:bg-[#333333]'
                 : 'bg-surface text-ink border-[#bcbcb8] hover:bg-ink hover:text-white hover:border-ink'
@@ -1155,20 +1170,27 @@
               ${isRunning ? 'RESUME' : 'OPEN'}
             </button>
             ${isRunning ? `
-            <button type="button" onclick="closeRunningApp('${app.id}')" title="프로그램 닫기" class="h-8 px-2.5 bg-surface border border-red-300 text-red-600 font-mono text-[11px] font-semibold tracking-[0.06em] hover:bg-red-600 hover:text-white hover:border-red-600 transition-colors">
-              CLOSE
-            </button>
+              <button type="button" onclick="closeRunningApp('${app.id}', event)" title="실행 중인 프로그램 닫기" class="h-8 px-2.5 bg-red-50 border border-red-300 text-red-700 font-mono text-[11px] font-semibold hover:bg-red-600 hover:text-white hover:border-red-600 transition-colors">
+                CLOSE
+              </button>
             ` : ''}
-            <button type="button" onclick="openDataFolder()" title="저장 폴더 열기" class="w-8 h-8 bg-surface border border-[#bcbcb8] text-ink hover:bg-subtle flex items-center justify-center text-xs shrink-0">
-              📁
-            </button>
-            <button type="button" onclick="openAppEditModal('${app.id}')" title="이름 변경 및 설정" class="w-8 h-8 bg-surface border border-[#bcbcb8] text-ink hover:bg-subtle flex items-center justify-center text-xs font-bold shrink-0">
-              •••
-            </button>
+            <button type="button" onclick="openDataFolder()" title="저장 폴더 열기" class="w-8 h-8 bg-surface border border-[#bcbcb8] hover:bg-subtle flex items-center justify-center text-xs">📁</button>
+            <button type="button" onclick="openAppEditModal('${app.id}')" title="프로그램 설정 및 이름 변경" class="w-8 h-8 bg-surface border border-[#bcbcb8] hover:bg-subtle flex items-center justify-center text-xs">•••</button>
           </div>
         `;
         grid.appendChild(card);
       }
+    }
+
+    async function moveAppOrder(appId, delta) {
+      const idx = appsList.findIndex(a => a.id === appId);
+      const targetIdx = idx + delta;
+      if (idx < 0 || targetIdx < 0 || targetIdx >= appsList.length) return;
+      const [moved] = appsList.splice(idx, 1);
+      appsList.splice(targetIdx, 0, moved);
+      await saveLauncherConfig();
+      renderQuickTabs();
+      await renderDashboard();
     }
 
     function setFilter(filter) {
@@ -1186,121 +1208,67 @@
     }
 
     function toggleViewMode(mode) {
-      currentViewMode = mode;
       const grid = document.getElementById('apps-grid');
-      const btnGrid = document.getElementById('btn-grid-view');
-      const btnList = document.getElementById('btn-list-view');
-
       if (mode === 'list') {
         grid.className = 'grid grid-cols-1 gap-3';
-        btnList.className = 'w-8 h-8 border border-l-0 border-ink bg-ink text-white flex items-center justify-center text-xs';
-        btnGrid.className = 'w-8 h-8 border border-line bg-surface text-ink hover:bg-subtle flex items-center justify-center text-xs';
       } else {
         grid.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4';
-        btnGrid.className = 'w-8 h-8 border border-ink bg-ink text-white flex items-center justify-center text-xs';
-        btnList.className = 'w-8 h-8 border border-l-0 border-line bg-surface text-ink hover:bg-subtle flex items-center justify-center text-xs';
       }
     }
 
-    // 저장 폴더 열기
     async function openDataFolder() {
       const dataDir = await getDataDir();
       if (isTauriEnv()) {
         try {
           const tauri = getTauri();
-          if (tauri.core && tauri.core.invoke) {
-            await tauri.core.invoke('open_folder', { path: dataDir });
-            showToast('윈도우 탐색기에서 저장 폴더를 열었습니다.');
-            return;
-          }
+          await tauri.core.invoke('open_folder', { path: dataDir });
+          showToast('저장 폴더를 열었습니다.');
+          return;
         } catch (e) {
-          console.warn('네이티브 폴더 열기 폴백:', e);
+          showToast(`폴더 열기 오류: ${e}`, 'error');
+          return;
         }
       }
-
-      document.getElementById('folder-path-text').innerText = dataDir;
-      document.getElementById('folder-modal-desc').innerText = isTauriEnv()
-        ? '아래 경로의 data 폴더에 각 프로그램별 JSON 파일이 자동 저장됩니다.'
-        : '현재 브라우저 프리뷰 모드에서는 데이터가 브라우저 로컬 스토리지에 저장되며, Tauri(.exe) 설치 후에는 아래 PC 폴더에 자동 저장됩니다.';
-
-      const listEl = document.getElementById('storage-summary-list');
-      listEl.innerHTML = '';
-      for (const app of appsList) {
-        await preloadAppStorage(app.id);
-        const obj = storageCache[app.id] || {};
-        const count = Object.keys(obj).length;
-        const row = document.createElement('div');
-        row.className = 'px-3 py-2 flex justify-between items-center bg-surface';
-        row.innerHTML = `
-          <span class="font-medium text-ink">${app.name} <span class="font-mono text-[10px] text-inkmuted">(${app.id}_storage.json)</span></span>
-          <span class="font-mono text-[11px] text-inksec">${count} 항목</span>
-        `;
-        listEl.appendChild(row);
-      }
-
-      openModal('folder-modal');
+      showToast('현재 웹 프리뷰 모드입니다. EXE 설치 시 저장 폴더가 열립니다.');
     }
 
-    function copyFolderPath() {
-      const text = document.getElementById('folder-path-text').innerText;
-      const temp = document.createElement('textarea');
-      temp.value = text;
-      document.body.appendChild(temp);
-      temp.select();
-      document.execCommand('copy');
-      document.body.removeChild(temp);
-      showToast('저장 폴더 경로가 클립보드에 복사되었습니다.');
-    }
-
-    // 전체화면 모드 & 글로벌 키보드 단축키 처리
     async function toggleFocusFullscreen(forceState) {
       const isCurrentlyFull = document.body.classList.contains('focus-fullscreen');
       const nextState = typeof forceState === 'boolean' ? forceState : !isCurrentlyFull;
       document.body.classList.toggle('focus-fullscreen', nextState);
 
-      if (isTauriEnv()) {
-        try {
-          const tauri = getTauri();
-          if (tauri.window) {
-            const win = tauri.window.getCurrentWindow();
-            await win.setFullscreen(nextState);
-          }
-        } catch (e) {}
-      }
+      try {
+        const tauri = getTauri();
+        if (tauri && tauri.window) {
+          const win = tauri.window.getCurrentWindow();
+          await win.setFullscreen(nextState);
+        }
+      } catch (e) {}
     }
 
-    function handleGlobalShortcut(key, ctrlKey) {
+    function handleLauncherShortcut(key, ctrlOrMeta) {
       if (key === 'F11') {
         toggleFocusFullscreen();
-        return;
-      }
-      if (key === 'Escape' && document.body.classList.contains('focus-fullscreen')) {
+      } else if (key === 'Escape' && document.body.classList.contains('focus-fullscreen')) {
         toggleFocusFullscreen(false);
-        return;
-      }
-      if (ctrlKey && /^[0-9]$/.test(key)) {
-        const num = parseInt(key, 10);
-        if (num === 0) {
-          showDashboard();
-        } else if (appsList[num - 1]) {
-          openOrSwitchApp(appsList[num - 1].id, false);
+      } else if (ctrlOrMeta && key === '0') {
+        showDashboard();
+      } else if (ctrlOrMeta && /^[1-9]$/.test(key)) {
+        const idx = parseInt(key, 10) - 1;
+        if (appsList[idx]) {
+          openOrSwitchApp(appsList[idx].id, false);
         }
       }
     }
 
     window.addEventListener('keydown', (e) => {
-      if (e.key === 'F11') {
+      const ctrlOrMeta = e.ctrlKey || e.metaKey;
+      if (e.key === 'F11' || (ctrlOrMeta && /^[0-9]$/.test(e.key))) {
         e.preventDefault();
-        handleGlobalShortcut('F11', false);
-      } else if (e.key === 'Escape' && document.body.classList.contains('focus-fullscreen')) {
-        handleGlobalShortcut('Escape', false);
-      } else if (e.ctrlKey && !e.altKey && !e.shiftKey && /^[0-9]$/.test(e.key)) {
-        e.preventDefault();
-        handleGlobalShortcut(e.key, true);
       }
+      handleLauncherShortcut(e.key, ctrlOrMeta);
     });
 
-    // 모달 열기/닫기
     function openModal(id) {
       const el = document.getElementById(id);
       el.classList.remove('hidden');
@@ -1313,22 +1281,6 @@
       el.classList.remove('flex');
     }
 
-    // 프로그램 추가 모달
-    function openAddAppModal() {
-      document.getElementById('edit-modal-title').innerText = '+ 새 HTML 프로그램 추가';
-      document.getElementById('edit-app-id').value = '';
-      document.getElementById('edit-app-url').value = '';
-      document.getElementById('edit-app-name').value = '';
-      document.getElementById('edit-app-subtitle').value = '';
-      document.getElementById('edit-app-desc').value = '';
-      document.getElementById('edit-app-version').value = 'AUTO';
-      document.getElementById('btn-reload-source').classList.add('hidden');
-      document.getElementById('btn-delete-app').classList.add('hidden');
-      openModal('edit-modal');
-      setTimeout(() => document.getElementById('edit-app-url').focus(), 50);
-    }
-
-    // 프로그램 수정 모달
     function openAppEditModal(appId) {
       const app = appsList.find(a => a.id === appId);
       if (!app) return;
@@ -1339,35 +1291,63 @@
       document.getElementById('edit-app-subtitle').value = app.subtitle || '';
       document.getElementById('edit-app-desc').value = app.desc || '';
       document.getElementById('edit-app-version').value = app.version || 'V1.0';
-      document.getElementById('btn-reload-source').classList.remove('hidden');
-      document.getElementById('btn-delete-app').classList.remove('hidden');
+      document.getElementById('btn-reload-source').style.display = 'inline-block';
+      document.getElementById('btn-delete-app').style.display = 'inline-block';
       openModal('edit-modal');
+    }
+
+    function openAddAppModal() {
+      document.getElementById('edit-modal-title').innerText = '새 HTML 프로그램 추가';
+      document.getElementById('edit-app-id').value = '';
+      document.getElementById('edit-app-url').value = '';
+      document.getElementById('edit-app-name').value = '';
+      document.getElementById('edit-app-subtitle').value = '';
+      document.getElementById('edit-app-desc').value = '';
+      document.getElementById('edit-app-version').value = 'AUTO';
+      document.getElementById('btn-reload-source').style.display = 'none';
+      document.getElementById('btn-delete-app').style.display = 'none';
+      openModal('edit-modal');
+    }
+
+    async function autoFillFromGitHubUrl() {
+      const rawUrl = toRawGitHubUrl(document.getElementById('edit-app-url').value);
+      if (!rawUrl) {
+        showToast('먼저 GitHub 주소를 입력해 주세요.', 'error');
+        return;
+      }
+      document.getElementById('edit-app-url').value = rawUrl;
+      showToast('GitHub에서 파일 정보를 읽어오는 중...');
+      try {
+        const res = await fetch(`${rawUrl}?t=${Date.now()}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const html = await res.text();
+        const detectedTitle = extractTitleFromHtml(html);
+        const detectedVer = detectVersionFromHtml(html, rawUrl);
+
+        if (detectedTitle && !document.getElementById('edit-app-name').value.trim()) {
+          document.getElementById('edit-app-name').value = detectedTitle;
+        }
+        if (detectedVer) {
+          document.getElementById('edit-app-version').value = detectedVer;
+        }
+        showToast('프로그램 제목과 버전 정보를 자동으로 채웠습니다.', 'success');
+      } catch (e) {
+        showToast(`자동 인식 실패: ${e.message}`, 'error');
+      }
     }
 
     async function saveAppEdit() {
       const id = document.getElementById('edit-app-id').value;
-      const rawUrlInput = document.getElementById('edit-app-url').value;
-      const rawUrl = normalizeGitHubUrl(rawUrlInput);
-      let rawName = document.getElementById('edit-app-name').value.trim();
-      const subtitle = document.getElementById('edit-app-subtitle').value.trim() || 'Cloud Linked Web Tool';
-      const desc = document.getElementById('edit-app-desc').value.trim() || 'GitHub 연동 업무 자동화 프로그램입니다.';
+      const rawUrl = toRawGitHubUrl(document.getElementById('edit-app-url').value);
+      const name = stripVersionFromName(document.getElementById('edit-app-name').value.trim());
+      const subtitle = document.getElementById('edit-app-subtitle').value.trim();
+      const desc = document.getElementById('edit-app-desc').value.trim();
       const version = document.getElementById('edit-app-version').value.trim() || 'AUTO';
 
-      if (!rawUrl) {
-        showToast('GitHub HTML 주소를 입력해 주세요.', 'error');
+      if (!name || !rawUrl) {
+        showToast('프로그램 이름과 GitHub 주소를 입력해 주세요.', 'error');
         return;
       }
-
-      if (!rawName) {
-        try {
-          const decoded = decodeURIComponent(rawUrl);
-          rawName = (decoded.split('/').pop() || '새 프로그램').replace(/\.html?$/i, '');
-        } catch (e) {
-          rawName = '새 프로그램';
-        }
-      }
-
-      const name = stripVersionText(rawName) || rawName;
 
       if (id) {
         const app = appsList.find(a => a.id === id);
@@ -1378,96 +1358,112 @@
           app.version = version;
           app.rawUrl = rawUrl;
         }
-        showToast(`[${name}] 정보가 수정되었습니다.`, 'success');
       } else {
-        const newApp = {
+        appsList.push({
           id: 'app_' + Date.now(),
           name,
-          subtitle,
-          desc,
+          subtitle: subtitle || 'Custom Web Module',
+          desc: desc || 'GitHub에서 연동된 사용자 정의 업무 프로그램입니다.',
           version: version === 'AUTO' ? 'CHECKING...' : version,
           lastUpdated: '',
           iconType: 'custom',
           rawUrl
-        };
-        appsList.push(newApp);
-        currentFilter = 'all';
-        document.getElementById('search-input').value = '';
-        showToast(`[${name}] 프로그램이 추가되었습니다.`, 'success');
+        });
       }
 
       await saveLauncherConfig();
       closeModal('edit-modal');
       renderQuickTabs();
+      await syncAllMetadataFromGitHub(false);
+      showToast(`'${name}' 프로그램이 저장되었습니다.`, 'success');
+    }
+
+    async function deleteAppFromModal() {
+      const id = document.getElementById('edit-app-id').value;
+      const app = appsList.find(a => a.id === id);
+      if (!app) return;
+
+      const ok = await showConfirm('프로그램 삭제', `'${app.name}' 카드를 런처 목록에서 제거할까요?\n(저장 폴더의 데이터 파일은 삭제되지 않습니다.)`);
+      if (!ok) return;
+
+      appsList = appsList.filter(a => a.id !== id);
+      runningAppIds.delete(id);
+      const frame = document.getElementById(`frame-${id}`);
+      if (frame) frame.remove();
+
+      await saveLauncherConfig();
+      closeModal('edit-modal');
+      renderQuickTabs();
       await renderDashboard();
-      syncAllMetadataFromGitHub(false);
+      showToast(`'${app.name}' 항목이 삭제되었습니다.`);
     }
 
     async function reloadAppFromModal() {
       const id = document.getElementById('edit-app-id').value;
       if (!id) return;
-      const ok = await showConfirm(
-        '최신 코드로 재시작',
-        '현재 화면의 임시 입력 상태를 초기화하고 GitHub에서 최신 코드를 다시 불러올까요?\n(이미 저장된 데이터는 유지됩니다.)'
-      );
+      const ok = await showConfirm('최신 코드 재시작', '현재 화면의 입력 상태를 초기화하고 GitHub에서 최신 코드를 다시 불러올까요?');
       if (!ok) return;
       closeModal('edit-modal');
       await openOrSwitchApp(id, true);
     }
 
-    async function requestDeleteApp() {
-      const id = document.getElementById('edit-app-id').value;
-      const app = appsList.find(a => a.id === id);
-      if (!app) return;
-
-      const ok = await showConfirm(
-        '프로그램 삭제',
-        `'${app.name}' 카드를 런처 목록에서 삭제할까요?\n(설치 폴더에 저장된 데이터 파일은 삭제되지 않습니다.)`
-      );
-      if (!ok) return;
-
-      appsList = appsList.filter(a => a.id !== id);
-      if (DEFAULT_APPS.some(d => d.id === id) && !deletedDefaultIds.includes(id)) {
-        deletedDefaultIds.push(id);
-      }
-
-      if (runningAppIds.has(id)) {
-        runningAppIds.delete(id);
-        const frame = document.getElementById(`frame-${id}`);
-        if (frame) frame.remove();
-        if (blobUrls[id]) {
-          URL.revokeObjectURL(blobUrls[id]);
-          delete blobUrls[id];
-        }
-      }
-
-      await saveLauncherConfig();
-      closeModal('edit-modal');
-      if (activeViewId === id) {
-        showDashboard();
-      } else {
-        renderQuickTabs();
-        renderDashboard();
-      }
-      showToast(`[${app.name}] 목록에서 제거되었습니다.`);
+    // 백업 데이터 관리
+    async function getBackupDir() {
+      return await getFilePath('backups');
     }
 
-    // =========================================================================
-    // 백업 데이터 관리 (자동 일일 백업 + 전체/개별 선택 복원 + 개별 데이터 초기화)
-    // =========================================================================
-    async function getBackupDir() {
-      const tauri = getTauri();
-      const backupDir = await getFilePath('backups');
-      if (tauri && !(await tauri.fs.exists(backupDir))) {
-        await tauri.fs.mkdir(backupDir, { recursive: true });
+    async function openBackupModal() {
+      openModal('backup-modal');
+      const modalPathEl = document.getElementById('modal-data-path');
+      if (modalPathEl) modalPathEl.innerText = await getDataDir();
+      await renderBackupList();
+      await renderAppResetList();
+    }
+
+    async function runAutoDailyBackup() {
+      try {
+        const now = new Date();
+        const yyyy = now.getFullYear();
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const dd = String(now.getDate()).padStart(2, '0');
+        const todayFile = `zalnet_auto_${yyyy}-${mm}-${dd}.json`;
+
+        if (isTauriEnv()) {
+          const tauri = getTauri();
+          const backupDir = await getBackupDir();
+          const existingList = await nativeListJson(backupDir);
+          if (!existingList.includes(todayFile)) {
+            const todayPath = await tauri.path.join(backupDir, todayFile);
+            const payload = await buildBackupPayload();
+            await nativeWriteText(todayPath, JSON.stringify(payload, null, 2));
+          }
+          const autoFiles = existingList
+            .filter(name => name.startsWith('zalnet_auto_') && name.endsWith('.json'))
+            .sort((a, b) => b.localeCompare(a));
+          for (const oldFile of autoFiles.slice(14)) {
+            const oldPath = await tauri.path.join(backupDir, oldFile);
+            await nativeRemoveFile(oldPath);
+          }
+        } else {
+          const existing = JSON.parse(window.localStorage.getItem('zalnet_snapshots') || '{}');
+          if (!existing[todayFile]) {
+            existing[todayFile] = await buildBackupPayload();
+            const autoKeys = Object.keys(existing)
+              .filter(k => k.startsWith('zalnet_auto_'))
+              .sort((a, b) => b.localeCompare(a));
+            for (const oldKey of autoKeys.slice(14)) {
+              delete existing[oldKey];
+            }
+            window.localStorage.setItem('zalnet_snapshots', JSON.stringify(existing));
+          }
+        }
+      } catch (e) {
+        console.warn('자동 일일 백업 경고:', e);
       }
-      return backupDir;
     }
 
     async function buildBackupPayload() {
-      await flushAllPendingSaves();
       const payload = {
-        suite: 'ZALNET WORK APP SUITE',
         createdAt: new Date().toISOString(),
         launcherConfig: appsList,
         appsData: {}
@@ -1479,113 +1475,29 @@
       return payload;
     }
 
-    // 매일 첫 실행 시 자동 일일 백업 생성 및 14일 보관 정리
-    async function runAutoDailyBackup() {
-      try {
-        const today = getLocalDateString();
-        const autoFileName = `zalnet_auto_${today}.json`;
+    async function createFullBackup() {
+      const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+      const fileName = `zalnet_backup_${stamp}.json`;
+      const payload = await buildBackupPayload();
 
-        if (isTauriEnv()) {
-          const tauri = getTauri();
-          const backupDir = await getBackupDir();
-          const fullPath = await tauri.path.join(backupDir, autoFileName);
-
-          if (!(await tauri.fs.exists(fullPath))) {
-            const payload = await buildBackupPayload();
-            await tauri.fs.writeTextFile(fullPath, JSON.stringify(payload, null, 2));
-          }
-
-          // 최근 14일 치 자동 백업만 유지하고 오래된 자동 백업 정리
-          const entries = await tauri.fs.readDir(backupDir);
-          const autoFiles = entries
-            .filter(e => e.name && e.name.startsWith('zalnet_auto_') && e.name.endsWith('.json'))
-            .map(e => e.name)
-            .sort((a, b) => b.localeCompare(a));
-
-          for (const oldFile of autoFiles.slice(14)) {
-            const oldPath = await tauri.path.join(backupDir, oldFile);
-            await tauri.fs.remove(oldPath);
-          }
-        } else {
-          const existing = JSON.parse(window.localStorage.getItem('zalnet_snapshots') || '{}');
-          if (!existing[autoFileName]) {
-            existing[autoFileName] = await buildBackupPayload();
-            const autoKeys = Object.keys(existing)
-              .filter(k => k.startsWith('zalnet_auto_'))
-              .sort((a, b) => b.localeCompare(a));
-            for (const oldKey of autoKeys.slice(14)) {
-              delete existing[oldKey];
-            }
-            window.localStorage.setItem('zalnet_snapshots', JSON.stringify(existing));
-          }
-        }
-      } catch (e) {
-        console.warn('자동 일일 백업 스킵:', e);
-      }
-    }
-
-    async function openBackupModal() {
-      closeSelectivePanel();
-      renderResetAppSelect();
-      openModal('backup-modal');
-      await renderBackupList();
-    }
-
-    function renderResetAppSelect() {
-      const sel = document.getElementById('reset-app-select');
-      sel.innerHTML = '';
-      appsList.forEach(app => {
-        const opt = document.createElement('option');
-        opt.value = app.id;
-        opt.innerText = `${app.name} (${app.id}_storage.json)`;
-        sel.appendChild(opt);
-      });
-    }
-
-    async function resetSingleAppData() {
-      const appId = document.getElementById('reset-app-select').value;
-      const app = appsList.find(a => a.id === appId);
-      if (!app) return;
-
-      const ok = await showConfirm(
-        '개별 프로그램 데이터 초기화',
-        `'${app.name}' 프로그램에 저장된 모든 로컬 데이터를 비울까요?\n(초기화 전 '수동 스냅샷 생성'으로 백업을 먼저 만들어 두시는 것을 권장합니다.)`
-      );
-      if (!ok) return;
-
-      storageCache[appId] = {};
-      await writeAppStorageNow(appId);
-
-      if (runningAppIds.has(appId)) {
-        await openOrSwitchApp(appId, true);
-      }
-      await renderDashboard();
-      showToast(`[${app.name}] 데이터가 초기화되었습니다.`, 'success');
-    }
-
-    async function createFullBackup(isSilent = false) {
-      try {
-        const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-        const fileName = `zalnet_backup_${stamp}.json`;
-        const payload = await buildBackupPayload();
-        const jsonStr = JSON.stringify(payload, null, 2);
-
-        if (isTauriEnv()) {
+      if (isTauriEnv()) {
+        try {
           const tauri = getTauri();
           const backupDir = await getBackupDir();
           const fullPath = await tauri.path.join(backupDir, fileName);
-          await tauri.fs.writeTextFile(fullPath, jsonStr);
-        } else {
-          const existing = JSON.parse(window.localStorage.getItem('zalnet_snapshots') || '{}');
-          existing[fileName] = payload;
-          window.localStorage.setItem('zalnet_snapshots', JSON.stringify(existing));
+          await nativeWriteText(fullPath, JSON.stringify(payload, null, 2));
+        } catch (e) {
+          showToast(`백업 생성 오류: ${e}`, 'error');
+          return;
         }
-
-        await renderBackupList();
-        if (!isSilent) showToast(`스냅샷 백업 완료: ${fileName}`, 'success');
-      } catch (e) {
-        if (!isSilent) showToast('백업 생성 오류: ' + e.message, 'error');
+      } else {
+        const existing = JSON.parse(window.localStorage.getItem('zalnet_snapshots') || '{}');
+        existing[fileName] = payload;
+        window.localStorage.setItem('zalnet_snapshots', JSON.stringify(existing));
       }
+
+      await renderBackupList();
+      showToast(`백업 스냅샷 생성 완료: ${fileName}`, 'success');
     }
 
     async function exportBackupFile() {
@@ -1594,10 +1506,10 @@
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `zalnet_suite_backup_${getLocalDateString()}.json`;
+      a.download = `zalnet_suite_backup_${new Date().toISOString().slice(0, 10)}.json`;
       a.click();
       URL.revokeObjectURL(url);
-      showToast('전체 백업 JSON 파일을 내보냈습니다.');
+      showToast('백업 JSON 파일을 다운로드했습니다.', 'success');
     }
 
     async function importBackupFile(event) {
@@ -1605,42 +1517,36 @@
       if (!file) return;
       try {
         const text = await file.text();
-        const parsed = JSON.parse(text);
-        await applyBackupPayload(parsed, null);
+        await applyBackupPayload(JSON.parse(text), null);
       } catch (e) {
-        showToast('유효하지 않은 백업 파일입니다: ' + e.message, 'error');
+        showToast(`유효하지 않은 백업 파일입니다: ${e.message}`, 'error');
       }
       event.target.value = '';
     }
 
-    // selectedAppIds가 null이면 전체 복원, 배열이면 지정된 앱만 선택 복원
     async function applyBackupPayload(payload, selectedAppIds = null) {
       if (!payload || !payload.appsData) {
         showToast('백업 데이터 형식이 올바르지 않습니다.', 'error');
         return;
       }
+      const targetIds = selectedAppIds
+        ? Object.keys(payload.appsData).filter(id => selectedAppIds.includes(id))
+        : Object.keys(payload.appsData);
 
-      const targetIds = selectedAppIds || Object.keys(payload.appsData);
       if (targetIds.length === 0) {
         showToast('복원할 프로그램을 1개 이상 선택해 주세요.', 'error');
         return;
       }
 
-      const targetNames = targetIds
-        .map(id => {
-          const found = appsList.find(a => a.id === id) || (payload.launcherConfig || []).find(a => a.id === id);
-          return found ? found.name : id;
-        })
-        .join(', ');
-
       const ok = await showConfirm(
-        selectedAppIds ? '선택 프로그램 데이터 복원' : '전체 백업 데이터 복원',
-        `대상 프로그램: [${targetNames}]\n\n선택한 시점의 데이터로 복원할까요?\n(실행 중인 대상 프로그램은 새 데이터 반영을 위해 재시작됩니다.)`
+        '백업 데이터 복원',
+        selectedAppIds
+          ? `선택한 ${targetIds.length}개 프로그램의 데이터를 백업 시점으로 복원할까요?`
+          : '선택한 백업 시점으로 모든 프로그램 데이터를 복원할까요?\n(실행 중인 프로그램은 새 데이터 반영을 위해 재시작됩니다.)'
       );
       if (!ok) return;
 
       for (const appId of targetIds) {
-        if (!Object.prototype.hasOwnProperty.call(payload.appsData, appId)) continue;
         const data = payload.appsData[appId] || {};
         storageCache[appId] = data;
         await writeAppStorageNow(appId);
@@ -1655,69 +1561,61 @@
         await saveLauncherConfig();
       }
 
-      closeSelectivePanel();
       renderQuickTabs();
       await renderDashboard();
       closeModal('backup-modal');
       showToast('데이터 복원이 완료되었습니다.', 'success');
     }
 
-    // 선택 복원 패널 열기
-    async function openSelectiveRestore(fileName) {
-      let payload = null;
+    async function getSnapshotPayload(fileName) {
+      if (loadedSnapshotsCache[fileName]) return loadedSnapshotsCache[fileName];
       if (isTauriEnv()) {
         const tauri = getTauri();
         const backupDir = await getBackupDir();
         const fullPath = await tauri.path.join(backupDir, fileName);
-        const raw = await tauri.fs.readTextFile(fullPath);
-        payload = JSON.parse(raw);
+        const raw = await nativeReadText(fullPath);
+        loadedSnapshotsCache[fileName] = JSON.parse(raw);
       } else {
         const existing = JSON.parse(window.localStorage.getItem('zalnet_snapshots') || '{}');
-        payload = existing[fileName];
+        loadedSnapshotsCache[fileName] = existing[fileName];
       }
+      return loadedSnapshotsCache[fileName];
+    }
 
-      if (!payload || !payload.appsData) {
-        showToast('백업 데이터를 읽을 수 없습니다.', 'error');
+    async function toggleSelectivePanel(fileName, panelId) {
+      const panel = document.getElementById(panelId);
+      if (!panel) return;
+      if (!panel.classList.contains('hidden')) {
+        panel.classList.add('hidden');
         return;
       }
+      const payload = await getSnapshotPayload(fileName);
+      if (!payload || !payload.appsData) return;
 
-      pendingSelectivePayload = payload;
-      document.getElementById('selective-restore-title').innerText = `선택 복원 (${fileName})`;
-      const listEl = document.getElementById('selective-checkbox-list');
-      listEl.innerHTML = '';
-
-      const appIdsInBackup = Object.keys(payload.appsData);
-      for (const appId of appIdsInBackup) {
-        const meta = appsList.find(a => a.id === appId) || (payload.launcherConfig || []).find(a => a.id === appId);
-        const labelText = meta ? meta.name : appId;
+      const listDiv = panel.querySelector('.selective-items');
+      listDiv.innerHTML = '';
+      for (const appId of Object.keys(payload.appsData)) {
+        const matchedApp = appsList.find(a => a.id === appId) || (payload.launcherConfig || []).find(a => a.id === appId);
+        const labelName = matchedApp ? matchedApp.name : appId;
         const keyCount = Object.keys(payload.appsData[appId] || {}).length;
-
-        const row = document.createElement('label');
-        row.className = 'flex items-center gap-2 bg-surface border border-line px-2.5 py-1.5 cursor-pointer hover:border-ink';
-        row.innerHTML = `
-          <input type="checkbox" class="selective-app-chk accent-ink" value="${appId}" checked />
-          <span class="text-xs font-medium text-ink truncate">${labelText}</span>
-          <span class="font-mono text-[10px] text-inkmuted ml-auto">${keyCount}항목</span>
+        const lbl = document.createElement('label');
+        lbl.className = 'flex items-center gap-1.5 text-xs text-ink cursor-pointer';
+        lbl.innerHTML = `
+          <input type="checkbox" value="${appId}" checked class="accent-ink" />
+          <span>${labelName}</span>
+          <span class="font-mono text-[10px] text-inkmuted">(${keyCount}항목)</span>
         `;
-        listEl.appendChild(row);
+        listDiv.appendChild(lbl);
       }
-
-      const panel = document.getElementById('selective-restore-panel');
       panel.classList.remove('hidden');
-      panel.classList.add('flex');
     }
 
-    function closeSelectivePanel() {
-      pendingSelectivePayload = null;
-      const panel = document.getElementById('selective-restore-panel');
-      panel.classList.add('hidden');
-      panel.classList.remove('flex');
-    }
-
-    async function executeSelectiveRestore() {
-      if (!pendingSelectivePayload) return;
-      const checked = Array.from(document.querySelectorAll('.selective-app-chk:checked')).map(el => el.value);
-      await applyBackupPayload(pendingSelectivePayload, checked);
+    async function restoreSelectedFromSnapshot(fileName, panelId) {
+      const panel = document.getElementById(panelId);
+      if (!panel) return;
+      const checked = Array.from(panel.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
+      const payload = await getSnapshotPayload(fileName);
+      await applyBackupPayload(payload, checked);
     }
 
     async function renderBackupList() {
@@ -1725,12 +1623,8 @@
       let fileNames = [];
 
       if (isTauriEnv()) {
-        try {
-          const tauri = getTauri();
-          const backupDir = await getBackupDir();
-          const entries = await tauri.fs.readDir(backupDir);
-          fileNames = entries.filter(e => e.name && e.name.endsWith('.json')).map(e => e.name);
-        } catch (e) {}
+        const backupDir = await getBackupDir();
+        fileNames = await nativeListJson(backupDir);
       } else {
         const existing = JSON.parse(window.localStorage.getItem('zalnet_snapshots') || '{}');
         fileNames = Object.keys(existing);
@@ -1744,53 +1638,55 @@
       }
 
       listEl.innerHTML = '';
-      for (const fileName of fileNames) {
+      fileNames.forEach((fileName, idx) => {
         const isAuto = fileName.startsWith('zalnet_auto_');
-        const badgeHtml = isAuto
-          ? `<span class="font-mono text-[9px] bg-artbluebg text-artblue border border-[#cfe0fc] px-1.5 py-0.5">AUTO DAILY</span>`
-          : `<span class="font-mono text-[9px] bg-subtle text-inksec border border-linelight px-1.5 py-0.5">MANUAL</span>`;
-
+        const panelId = `selective-panel-${idx}`;
         const item = document.createElement('div');
-        item.className = 'border border-line px-3 py-2.5 flex flex-wrap justify-between items-center bg-canvas gap-2';
+        item.className = 'border border-line px-3 py-2.5 flex flex-col bg-canvas gap-2';
         item.innerHTML = `
-          <div class="min-w-0">
-            <div class="flex items-center gap-1.5">
-              ${badgeHtml}
-              <span class="font-mono text-xs font-semibold text-ink truncate">${fileName}</span>
+          <div class="flex justify-between items-center gap-2">
+            <div class="min-w-0">
+              <div class="flex items-center gap-1.5">
+                <span class="font-mono text-[9px] px-1.5 py-0.5 ${isAuto ? 'bg-artbluebg text-artblue border border-[#cfe0fc]' : 'bg-subtle text-inksec border border-linelight'} font-bold">
+                  ${isAuto ? 'AUTO DAILY' : 'MANUAL'}
+                </span>
+                <span class="font-mono text-xs font-semibold text-ink truncate">${fileName}</span>
+              </div>
+            </div>
+            <div class="flex gap-1.5 shrink-0">
+              <button type="button" onclick="restoreSnapshot('${fileName}')" class="h-7 px-2 bg-ink text-white text-[11px] hover:bg-[#333333]">전체복원</button>
+              <button type="button" onclick="toggleSelectivePanel('${fileName}', '${panelId}')" class="h-7 px-2 bg-surface border border-line text-ink text-[11px] hover:bg-subtle">선택복원</button>
+              <button type="button" onclick="deleteSnapshot('${fileName}')" class="h-7 px-2 bg-surface border border-line text-ink text-[11px] hover:bg-subtle">삭제</button>
             </div>
           </div>
-          <div class="flex gap-1.5 shrink-0 ml-auto">
-            <button type="button" onclick="openSelectiveRestore('${fileName}')" class="h-7 px-2.5 bg-surface border border-ink text-ink text-xs font-medium hover:bg-subtle">선택 복원</button>
-            <button type="button" onclick="restoreSnapshot('${fileName}')" class="h-7 px-2.5 bg-ink text-white text-xs hover:bg-[#333333]">전체 복원</button>
-            <button type="button" onclick="deleteSnapshot('${fileName}')" class="h-7 px-2.5 bg-surface border border-line text-ink text-xs hover:bg-subtle">삭제</button>
+          <div id="${panelId}" class="hidden pt-2 border-t border-linelight flex flex-col gap-2">
+            <div class="selective-items grid grid-cols-2 gap-1.5"></div>
+            <div class="flex justify-end">
+              <button type="button" onclick="restoreSelectedFromSnapshot('${fileName}', '${panelId}')" class="h-7 px-3 bg-artblue text-white text-[11px] font-medium hover:opacity-90">
+                선택한 프로그램만 복원 실행
+              </button>
+            </div>
           </div>
         `;
         listEl.appendChild(item);
-      }
+      });
     }
 
     async function restoreSnapshot(fileName) {
-      if (isTauriEnv()) {
-        const tauri = getTauri();
-        const backupDir = await getBackupDir();
-        const fullPath = await tauri.path.join(backupDir, fileName);
-        const raw = await tauri.fs.readTextFile(fullPath);
-        await applyBackupPayload(JSON.parse(raw), null);
-      } else {
-        const existing = JSON.parse(window.localStorage.getItem('zalnet_snapshots') || '{}');
-        if (existing[fileName]) await applyBackupPayload(existing[fileName], null);
-      }
+      const payload = await getSnapshotPayload(fileName);
+      if (payload) await applyBackupPayload(payload, null);
     }
 
     async function deleteSnapshot(fileName) {
       const ok = await showConfirm('백업 삭제', `${fileName} 백업을 삭제할까요?`);
       if (!ok) return;
 
+      delete loadedSnapshotsCache[fileName];
       if (isTauriEnv()) {
         const tauri = getTauri();
         const backupDir = await getBackupDir();
         const fullPath = await tauri.path.join(backupDir, fileName);
-        await tauri.fs.remove(fullPath);
+        await nativeRemoveFile(fullPath);
       } else {
         const existing = JSON.parse(window.localStorage.getItem('zalnet_snapshots') || '{}');
         delete existing[fileName];
@@ -1800,13 +1696,79 @@
       showToast('백업 스냅샷이 삭제되었습니다.');
     }
 
-    // 초기화 실행
+    async function renderAppResetList() {
+      const listEl = document.getElementById('app-reset-list');
+      if (!listEl) return;
+      listEl.innerHTML = '';
+
+      for (const app of appsList) {
+        await preloadAppStorage(app.id);
+        const count = Object.keys(storageCache[app.id] || {}).length;
+        const row = document.createElement('div');
+        row.className = 'px-3 py-2 flex justify-between items-center bg-surface text-xs';
+        row.innerHTML = `
+          <div>
+            <span class="font-medium text-ink">${app.name}</span>
+            <span class="font-mono text-[10px] text-inkmuted ml-1.5">(${count} 항목 저장됨)</span>
+          </div>
+          <button type="button" onclick="resetSingleAppData('${app.id}')" ${count === 0 ? 'disabled' : ''} class="h-6 px-2 border border-red-300 text-red-600 text-[11px] hover:bg-red-600 hover:text-white disabled:opacity-35 disabled:pointer-events-none transition-colors">
+            초기화
+          </button>
+        `;
+        listEl.appendChild(row);
+      }
+    }
+
+    async function resetSingleAppData(appId) {
+      const app = appsList.find(a => a.id === appId);
+      if (!app) return;
+
+      const ok = await showConfirm(
+        '개별 프로그램 데이터 초기화',
+        `'${app.name}'에 저장된 로컬 데이터를 모두 비울까요?\n(필요하다면 먼저 상단에서 백업을 생성해 주세요.)`
+      );
+      if (!ok) return;
+
+      storageCache[appId] = {};
+      await writeAppStorageNow(appId);
+      if (runningAppIds.has(appId)) {
+        await openOrSwitchApp(appId, true);
+      }
+      await renderAppResetList();
+      await renderDashboard();
+      showToast(`[${app.name}] 데이터가 초기화되었습니다.`);
+    }
+
+    // 초기화 및 네이티브 창 닫기 이벤트 등록
     window.addEventListener('DOMContentLoaded', async () => {
       await loadLauncherConfig();
+      await runAutoDailyBackup();
       renderQuickTabs();
       await renderDashboard();
-      await runAutoDailyBackup();
       syncAllMetadataFromGitHub(false);
+
+      // Tauri 창 닫기(X) 시 대기 중인 저장 완료 및 실행 중인 앱 종료 확인
+      if (window.__TAURI__ && window.__TAURI__.window) {
+        try {
+          const appWindow = window.__TAURI__.window.getCurrentWindow();
+          await appWindow.onCloseRequested(async (event) => {
+            await flushAllPendingSavesAsync();
+            if (runningAppIds.size > 0) {
+              event.preventDefault();
+              const ok = await showConfirm(
+                'ZALNET Suite 종료 확인',
+                `현재 ${runningAppIds.size}개의 프로그램이 실행 중입니다.\n모든 작업 데이터를 저장하고 런처를 종료할까요?`
+              );
+              if (ok) {
+                await flushAllPendingSavesAsync();
+                await appWindow.destroy();
+              }
+            }
+          });
+        } catch (e) {
+          console.warn('창 종료 이벤트 등록 경고:', e);
+        }
+      }
     });
   </script>
 </body>
