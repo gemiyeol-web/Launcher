@@ -108,16 +108,16 @@
 
   <!-- 상단 헤더 바 (ArtCraft Suite 스타일) -->
   <header id="top-header" class="h-12 bg-surface border-b border-line flex items-center justify-between px-4 shrink-0 z-30">
-    <div class="flex items-center gap-3 min-w-0">
+    <div class="flex items-center gap-3 min-w-0 flex-1">
       <button type="button" onclick="showDashboard()" title="런처 홈으로 이동 (Ctrl+0)" class="font-black text-[15px] tracking-[0.08em] text-ink flex items-center gap-2 hover:opacity-75 transition-opacity shrink-0">
         <span>◼ ZALNET</span>
       </button>
       <div class="w-px h-4 bg-line shrink-0"></div>
-      <span class="font-mono text-[11px] text-inksec tracking-[0.06em] hidden lg:inline shrink-0">WORK APP SUITE</span>
+      <span class="font-mono text-[11px] text-inksec tracking-[0.06em] hidden xl:inline shrink-0">WORK APP SUITE</span>
       <span id="sandbox-header-badge" class="hidden font-mono text-[10px] font-bold px-2 py-0.5 bg-amber-500/20 text-amber-600 border border-amber-500/40 shrink-0">SANDBOX MODE</span>
 
       <!-- 실행 및 등록 앱 빠른 전환 탭 -->
-      <nav id="quick-tabs" class="flex items-center gap-1 ml-1 overflow-x-auto max-w-[38vw]"></nav>
+      <nav id="quick-tabs" class="flex items-center gap-1 ml-1 overflow-x-auto max-w-[58vw]"></nav>
     </div>
 
     <!-- 우측 유틸리티 액션 버튼 -->
@@ -130,19 +130,7 @@
         <span>✕</span>
         <span>현재 앱 닫기</span>
       </button>
-      <button type="button" onclick="openDataFolder()" title="현재 저장 폴더 열기" class="h-[30px] px-2.5 bg-surface border border-line text-ink text-xs hover:bg-subtle transition-colors flex items-center gap-1.5 rounded-none">
-        <span>📁</span>
-        <span class="hidden sm:inline">저장폴더</span>
-      </button>
-      <button type="button" onclick="openBackupModal()" title="백업 및 복원 관리" class="h-[30px] px-2.5 bg-surface border border-line text-ink text-xs hover:bg-subtle transition-colors flex items-center gap-1.5 rounded-none">
-        <span>💾</span>
-        <span class="hidden sm:inline">백업관리</span>
-      </button>
-      <button type="button" onclick="openAddAppModal()" title="새 HTML 프로그램 추가" class="h-[30px] px-2.5 bg-surface border border-line text-ink text-xs hover:bg-subtle transition-colors flex items-center gap-1 rounded-none">
-        <span>+</span>
-        <span class="hidden md:inline">프로그램 추가</span>
-      </button>
-      <button type="button" id="btn-nav-settings" onclick="showSettingsView()" title="런처 환경설정 (테마·업데이트·트레이·자동실행)" class="h-[30px] px-2.5 bg-surface border border-line text-ink text-xs hover:bg-subtle transition-colors flex items-center gap-1.5 rounded-none">
+      <button type="button" id="btn-nav-settings" onclick="showSettingsView()" title="런처 환경설정 (저장폴더·백업·프로그램 추가·트레이·자동실행)" class="h-[30px] px-2.5 bg-surface border border-line text-ink text-xs hover:bg-subtle transition-colors flex items-center gap-1.5 rounded-none">
         <span>⚙️</span>
         <span class="hidden sm:inline">설정</span>
       </button>
@@ -163,7 +151,7 @@
       <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
         <div class="flex items-center gap-1.5">
           <button type="button" id="tab-all" onclick="setFilter('all')" class="h-8 px-3.5 font-mono text-[11px] font-semibold border btn-solid tracking-[0.04em]">
-            ALL APPS (<span id="total-count">6</span>)
+            ALL APPS (<span id="total-count">7</span>)
           </button>
           <button type="button" id="tab-running" onclick="setFilter('running')" class="h-8 px-3.5 font-mono text-[11px] font-semibold border border-line bg-surface text-inksec hover:text-ink tracking-[0.04em]">
             RUNNING (<span id="running-count">0</span>)
@@ -263,7 +251,7 @@
               <div class="border-t border-linelight pt-3 flex items-center justify-between gap-2">
                 <div>
                   <div class="text-xs font-medium text-ink">Launcher version</div>
-                  <div class="font-mono text-[11px] text-inkmuted mt-0.5">v2.0.0 (GitHub Cloud Sync)</div>
+                  <div class="font-mono text-[11px] text-inkmuted mt-0.5">v2.1.0 (GitHub Cloud Sync)</div>
                 </div>
                 <button type="button" onclick="syncAllMetadataFromGitHub(true)" class="h-8 px-3 bg-surface border border-line text-xs font-mono hover:bg-subtle">
                   CHECK ALL NOW
@@ -300,7 +288,7 @@
               </p>
             </div>
 
-            <!-- 카드 4: QUICK LINKS (업무 바로가기 - ArtCraft COMMUNITY 스타일) -->
+            <!-- 카드 4: QUICK LINKS (업무 바로가기) -->
             <div class="bg-surface border border-line p-4 flex flex-col gap-3">
               <div class="flex items-center justify-between">
                 <div class="font-mono text-[10px] font-bold text-inkmuted tracking-[0.08em]">QUICK WORK LINKS</div>
@@ -315,7 +303,27 @@
           <!-- 우측 컬럼 -->
           <div class="flex flex-col gap-4">
 
-            <!-- 카드 5: DATA STORAGE FOLDER (기본 저장 폴더 - ArtCraft DEFAULT INSTALL FOLDER 스타일) -->
+            <!-- 카드 5: APPS & BACKUP MANAGEMENT (프로그램 추가·백업·저장폴더 빠른 실행) -->
+            <div class="bg-surface border border-line p-4 flex flex-col gap-3">
+              <div class="font-mono text-[10px] font-bold text-inkmuted tracking-[0.08em]">APPS &amp; BACKUP MANAGEMENT</div>
+              <p class="text-xs text-inksec">새 GitHub HTML 프로그램을 등록하거나 전체 JSON 백업 및 로컬 저장 폴더를 관리합니다.</p>
+              <div class="flex flex-wrap gap-2">
+                <button type="button" onclick="openAddAppModal()" class="h-8 px-3.5 btn-solid border text-xs font-medium flex items-center gap-1.5">
+                  <span>+</span>
+                  <span>프로그램 추가</span>
+                </button>
+                <button type="button" onclick="openBackupModal()" class="h-8 px-3.5 bg-surface border border-line text-ink text-xs font-medium hover:bg-subtle flex items-center gap-1.5">
+                  <span>💾</span>
+                  <span>백업관리</span>
+                </button>
+                <button type="button" onclick="openDataFolder()" class="h-8 px-3.5 bg-surface border border-line text-ink text-xs font-medium hover:bg-subtle flex items-center gap-1.5">
+                  <span>📁</span>
+                  <span>저장폴더</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- 카드 6: DATA STORAGE FOLDER (기본 저장 폴더) -->
             <div class="bg-surface border border-line p-4 flex flex-col gap-3">
               <div class="font-mono text-[10px] font-bold text-inkmuted tracking-[0.08em]">DATA STORAGE FOLDER</div>
               <div class="text-[13px] font-medium text-ink">Storage folder (데이터 JSON 저장 위치)</div>
@@ -336,7 +344,7 @@
               </div>
             </div>
 
-            <!-- 카드 6: RUNNING IN THE BACKGROUND (트레이 최소화 & 윈도우 자동 실행) -->
+            <!-- 카드 7: RUNNING IN THE BACKGROUND (트레이 최소화 & 윈도우 자동 실행) -->
             <div class="bg-surface border border-line p-4 flex flex-col gap-3.5">
               <div class="font-mono text-[10px] font-bold text-inkmuted tracking-[0.08em]">RUNNING IN THE BACKGROUND</div>
 
@@ -564,6 +572,16 @@
         lastUpdated: '',
         iconType: 'balju',
         rawUrl: 'https://raw.githubusercontent.com/gemiyeol-web/balju/main/%EB%B0%9C%EC%A3%BC%EA%B4%80%EB%A6%ACv4_3.html'
+      },
+      {
+        id: 'report',
+        name: '매출 분석기',
+        subtitle: 'Sales & Channel Analytics',
+        desc: '거래처·품목그룹·기간별 매출 추이 분석 및 정제 엑셀·PPT 보고서를 생성합니다.',
+        version: 'CHECKING...',
+        lastUpdated: '',
+        iconType: 'report',
+        rawUrl: 'https://raw.githubusercontent.com/gemiyeol-web/report/main/code_artifact_3.html'
       }
     ];
 
@@ -590,6 +608,7 @@
       margin: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="2" width="16" height="20" fill="rgba(128,128,128,0.18)"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="10" y2="10"/><line x1="14" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="10" y2="14"/><line x1="14" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="16" y2="18"/></svg>',
       qna: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" fill="rgba(128,128,128,0.18)"/></svg>',
       balju: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" fill="rgba(128,128,128,0.18)"/><rect x="9" y="3" width="6" height="4"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>',
+      report: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21.21 15.89A10 10 0 1 1 8 2.83" fill="rgba(128,128,128,0.18)"/><path d="M22 12A10 10 0 0 0 12 2v10z" fill="rgba(128,128,128,0.32)"/></svg>',
       custom: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polygon points="12 2 2 7 12 12 22 7 12 2" fill="rgba(128,128,128,0.18)"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>'
     };
 
@@ -1137,7 +1156,6 @@
             updatedAny = true;
           }
 
-          // 자동 모드이거나 수동 확인 버튼(showSpin) 또는 캐시가 없을 때 원격 HTML 확인
           const res = await fetch(`${app.rawUrl}?t=${Date.now()}`);
           if (res.ok) {
             const remoteHtml = await res.text();
@@ -1151,7 +1169,6 @@
               saveCachedAppHtml(app.id, remoteHtml, detectedVer, commitInfo?.sha || '');
               appUpdateAvailable[app.id] = false;
             } else {
-              // 수동 업데이트 모드: 캐시된 코드와 원격 코드가 다르면 업데이트 알림 플래그 활성화
               if (!cachedSnap) {
                 saveCachedAppHtml(app.id, remoteHtml, detectedVer, commitInfo?.sha || '');
                 app.version = detectedVer;
@@ -1306,7 +1323,7 @@
     }
 
     async function writeAppStorageNow(appId) {
-      if (launcherSettings.sandboxMode) return; // 샌드박스 모드에서는 실제 디스크 저장 차단
+      if (launcherSettings.sandboxMode) return;
       const jsonStr = JSON.stringify(storageCache[appId] || {}, null, 2);
       try {
         window.localStorage.setItem(`zalnet_app_data_${appId}`, jsonStr);
@@ -1469,7 +1486,6 @@
             }
           }
         } else {
-          // 수동 업데이트 모드 + 로컬 스냅샷 존재: 캐시 버전 즉시 실행
           htmlCode = cachedSnap.html;
           showToast(`[${app.name}] 저장된 버전(${cachedSnap.version || app.version})으로 실행합니다.`);
         }
@@ -1763,7 +1779,6 @@
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-1.5 flex-wrap">
                   <span class="text-[16px] font-bold text-ink tracking-[-0.02em]">${app.name}</span>
-                  <span class="font-mono text-[9px] bg-subtle border border-linelight text-inksec px-1.5 py-0.5 tracking-[0.04em]">BY ZALNET</span>
                 </div>
                 <div class="text-xs text-inksec mt-0.5 truncate">${app.subtitle || 'Web Automation Tool'}</div>
               </div>
@@ -2423,7 +2438,6 @@
           const appWindow = window.__TAURI__.window.getCurrentWindow();
           await appWindow.onCloseRequested(async (event) => {
             await flushAllPendingSavesAsync();
-            // 트레이 최소화가 켜져 있으면 Rust 쪽에서 창을 숨기므로 종료 확인 팝업을 띄우지 않음
             if (launcherSettings.keepInTray !== false) {
               return;
             }
