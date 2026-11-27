@@ -251,7 +251,7 @@
               <div class="border-t border-linelight pt-3 flex items-center justify-between gap-2">
                 <div>
                   <div class="text-xs font-medium text-ink">Launcher version</div>
-                  <div class="font-mono text-[11px] text-inkmuted mt-0.5">v2.1.0 (GitHub Cloud Sync)</div>
+                  <div class="font-mono text-[11px] text-inkmuted mt-0.5">v2.2.0 (GitHub Cloud Sync)</div>
                 </div>
                 <button type="button" onclick="syncAllMetadataFromGitHub(true)" class="h-8 px-3 bg-surface border border-line text-xs font-mono hover:bg-subtle">
                   CHECK ALL NOW
@@ -614,6 +614,7 @@
 
     const CUSTOM_DIR_KEY = 'zalnet_custom_data_dir';
     const SETTINGS_KEY = 'zalnet_launcher_settings_v1';
+    const LAUNCHER_CONFIG_KEY = 'zalnet_launcher_apps_v1';
     const HTML_CACHE_PREFIX = 'zalnet_app_html_snapshot_';
 
     let appsList = [];
@@ -625,7 +626,7 @@
     const sandboxCache = {};
     const saveTimers = {};
     const loadedSnapshotsCache = {};
-    const appUpdateAvailable = {}; // appId -> boolean
+    const appUpdateAvailable = {};
     let currentFilter = 'all';
     let isSuiteBooted = false;
 
@@ -682,6 +683,21 @@
     function isTauriEnv() {
       const t = getTauri();
       return !!(t && t.core && t.core.invoke && t.path);
+    }
+
+    /* 외부 브라우저 URL 열기 */
+    async function openExternalUrl(url) {
+      const cleanUrl = (url || '').trim();
+      if (!cleanUrl) return;
+      if (isTauriEnv()) {
+        try {
+          await getTauri().core.invoke('open_external_url', { url: cleanUrl });
+          return;
+        } catch (e) {
+          console.warn('open_external_url fallback:', e);
+        }
+      }
+      window.open(cleanUrl, '_blank', 'noopener,noreferrer');
     }
 
     /* 테마 및 설정 관리 */
@@ -934,6 +950,317 @@
       }
     }
 
+    /* 런처 구성 및 앱별 JSON 스토리지 관리 */
+    function mergeDefaultApps(savedList) {
+      const list = Array.isArray(savedList) && savedList.length > 0
+        ? JSON.parse(JSON.stringify(savedList))
+        : JSON.parse(JSON.stringify(DEFAULT_APPS));
+
+      for (const defApp of DEFAULT_APPS) {
+        const exists = list.some(item => item.id === defApp.id || toRawGitHubUrl(item.rawUrl) === toRawGitHubUrl(defApp.rawUrl));
+        if (!exists) {
+          list.push(JSON.parse(JSON.stringify(defApp)));
+        }
+      }
+      return list;
+    }
+
+    function loadLauncherConfigSync() {
+      try {
+        const raw = window.localStorage.getItem(LAUNCHER_CONFIG_KEY);
+        const parsed = raw ? JSON.parse(raw) : null;
+        appsList = mergeDefaultApps(parsed);
+      } catch (e) {
+        appsList = JSON.parse(JSON.stringify(DEFAULT_APPS));
+      }
+    }
+
+    async function loadLauncherConfig() {
+      if (!isTauriEnv()) {
+        loadLauncherConfigSync();
+        return;
+      }
+      try {
+        const cfgPath = await getFilePath('launcher_config.json');
+        const raw = await nativeReadText(cfgPath);
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          appsList = mergeDefaultApps(parsed);
+        } else if (parsed && Array.isArray(parsed.apps)) {
+          appsList = mergeDefaultApps(parsed.apps);
+          if (parsed.settings) {
+            launcherSettings = { ...launcherSettings, ...parsed.settings };
+            applyTheme(launcherSettings.theme);
+            applySandboxBadge();
+          }
+        }
+        window.localStorage.setItem(LAUNCHER_CONFIG_KEY, JSON.stringify(appsList));
+      } catch (e) {
+        loadLauncherConfigSync();
+        await saveLauncherConfig();
+      }
+    }
+
+    async function saveLauncherConfig() {
+      try {
+        window.localStorage.setItem(LAUNCHER_CONFIG_KEY, JSON.stringify(appsList));
+      } catch (e) {}
+
+      if (!isTauriEnv()) return;
+      try {
+        const cfgPath = await getFilePath('launcher_config.json');
+        const payload = {
+          apps: appsList,
+          settings: launcherSettings,
+          updatedAt: new Date().toISOString()
+        };
+        await nativeWriteText(cfgPath, JSON.stringify(payload, null, 2));
+      } catch (e) {}
+    }
+
+    async function preloadAppStorage(appId) {
+      if (launcherSettings.sandboxMode) {
+        if (!sandboxCache[appId]) {
+          sandboxCache[appId] = JSON.parse(JSON.stringify(storageCache[appId] || {}));
+        }
+        return sandboxCache[appId];
+      }
+
+      if (storageCache[appId]) return storageCache[appId];
+
+      if (isTauriEnv()) {
+        try {
+          const filePath = await getFilePath(`${appId}_storage.json`);
+          const raw = await nativeReadText(filePath);
+          storageCache[appId] = JSON.parse(raw) || {};
+          return storageCache[appId];
+        } catch (e) {
+          storageCache[appId] = {};
+        }
+      } else {
+        try {
+          const raw = window.localStorage.getItem(`zalnet_app_data_${appId}`);
+          storageCache[appId] = raw ? JSON.parse(raw) : {};
+        } catch (e) {
+          storageCache[appId] = {};
+        }
+      }
+      return storageCache[appId];
+    }
+
+    function scheduleAppStorageSave(appId) {
+      if (launcherSettings.sandboxMode) return;
+      clearTimeout(saveTimers[appId]);
+      saveTimers[appId] = setTimeout(() => {
+        writeAppStorageNow(appId);
+      }, 300);
+    }
+
+    async function writeAppStorageNow(appId) {
+      if (launcherSettings.sandboxMode) return;
+      const data = storageCache[appId] || {};
+      const serialized = JSON.stringify(data, null, 2);
+
+      try {
+        window.localStorage.setItem(`zalnet_app_data_${appId}`, serialized);
+      } catch (e) {}
+
+      if (!isTauriEnv()) return;
+      try {
+        const filePath = await getFilePath(`${appId}_storage.json`);
+        await nativeWriteText(filePath, serialized);
+      } catch (e) {
+        console.warn(`[ZALNET] ${appId} 저장 오류:`, e);
+      }
+    }
+
+    async function flushAllPendingSavesAsync() {
+      for (const appId of Object.keys(saveTimers)) {
+        clearTimeout(saveTimers[appId]);
+        delete saveTimers[appId];
+        await writeAppStorageNow(appId);
+      }
+    }
+
+    /* 자식 iframe 통신 브릿지 (스토리지 동기화 + 엑셀/PPT 다운로드 중계 + 단축키) */
+    window.addEventListener('message', async (event) => {
+      const msg = event.data;
+      if (!msg || typeof msg !== 'object') return;
+
+      if (msg.type === 'ZALNET_STORAGE_SET' && msg.appId) {
+        const targetStore = launcherSettings.sandboxMode
+          ? (sandboxCache[msg.appId] = sandboxCache[msg.appId] || {})
+          : (storageCache[msg.appId] = storageCache[msg.appId] || {});
+        targetStore[msg.key] = String(msg.value);
+        scheduleAppStorageSave(msg.appId);
+      } else if (msg.type === 'ZALNET_STORAGE_REMOVE' && msg.appId) {
+        const targetStore = launcherSettings.sandboxMode
+          ? (sandboxCache[msg.appId] = sandboxCache[msg.appId] || {})
+          : (storageCache[msg.appId] = storageCache[msg.appId] || {});
+        delete targetStore[msg.key];
+        scheduleAppStorageSave(msg.appId);
+      } else if (msg.type === 'ZALNET_STORAGE_CLEAR' && msg.appId) {
+        if (launcherSettings.sandboxMode) {
+          sandboxCache[msg.appId] = {};
+        } else {
+          storageCache[msg.appId] = {};
+          scheduleAppStorageSave(msg.appId);
+        }
+      } else if (msg.type === 'ZALNET_OPEN_EXTERNAL' && msg.url) {
+        await openExternalUrl(msg.url);
+      } else if (msg.type === 'ZALNET_SHORTCUT') {
+        handleLauncherShortcut(msg.key, msg.ctrlOrMeta);
+      } else if (msg.type === 'ZALNET_DOWNLOAD_FILE') {
+        await handleChildDownloadMessage(msg);
+      }
+    });
+
+    async function handleChildDownloadMessage(data) {
+      const fileName = String(data.fileName || `export_${Date.now()}.bin`).replace(/[\\/:*?"<>|]/g, '_');
+      const base64 = data.base64;
+      const mimeType = data.mimeType || 'application/octet-stream';
+      if (!base64) return;
+
+      try {
+        const tauri = getTauri();
+        if (tauri && tauri.core && typeof tauri.core.invoke === 'function') {
+          let targetPath = fileName;
+          if (tauri.path && typeof tauri.path.downloadDir === 'function') {
+            const dlDir = await tauri.path.downloadDir();
+            const sep = dlDir.includes('\\') ? '\\' : '/';
+            targetPath = `${dlDir.replace(/[\\/]+$/, '')}${sep}${fileName}`;
+          }
+          await tauri.core.invoke('fs_write_bytes', { path: targetPath, base64 });
+          showToast(`다운로드 폴더에 저장 완료: ${fileName}`, 'success');
+          return;
+        }
+      } catch (err) {
+        console.warn('[ZALNET] fs_write_bytes 미지원 또는 실패, 브라우저 다운로드로 전환:', err);
+      }
+
+      try {
+        const binary = atob(base64);
+        const len = binary.length;
+        const bytes = new Uint8Array(len);
+        for (let i = 0; i < len; i++) bytes[i] = binary.charCodeAt(i);
+        const blob = new Blob([bytes], { type: mimeType });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+        showToast(`파일 다운로드 시작: ${fileName}`, 'success');
+      } catch (fallbackErr) {
+        showToast(`파일 저장 실패: ${fallbackErr.message}`, 'error');
+      }
+    }
+
+    function injectLauncherBridgeIntoHtml(rawHtml, appId, initialStorage) {
+      const safeStoreJson = JSON.stringify(initialStorage || {}).replace(/<\/script>/gi, '<\\/script>');
+      const bridgeScript = `
+<script>
+(function() {
+  const APP_ID = ${JSON.stringify(appId)};
+  const memStore = ${safeStoreJson};
+
+  const proxyStorage = {
+    get length() { return Object.keys(memStore).length; },
+    key(index) { return Object.keys(memStore)[index] ?? null; },
+    getItem(k) { return Object.prototype.hasOwnProperty.call(memStore, k) ? memStore[k] : null; },
+    setItem(k, v) {
+      const strVal = String(v);
+      memStore[k] = strVal;
+      try { window.parent.postMessage({ type: 'ZALNET_STORAGE_SET', appId: APP_ID, key: k, value: strVal }, '*'); } catch (e) {}
+    },
+    removeItem(k) {
+      delete memStore[k];
+      try { window.parent.postMessage({ type: 'ZALNET_STORAGE_REMOVE', appId: APP_ID, key: k }, '*'); } catch (e) {}
+    },
+    clear() {
+      for (const k of Object.keys(memStore)) delete memStore[k];
+      try { window.parent.postMessage({ type: 'ZALNET_STORAGE_CLEAR', appId: APP_ID }, '*'); } catch (e) {}
+    }
+  };
+
+  try {
+    Object.defineProperty(window, 'localStorage', { value: proxyStorage, configurable: true });
+  } catch (e) {}
+
+  // Blob URL 다운로드 가로채기 (엑셀/PPT 저장 지원)
+  const blobRegistry = new Map();
+  const origCreateObjectURL = URL.createObjectURL.bind(URL);
+  URL.createObjectURL = function(obj) {
+    const url = origCreateObjectURL(obj);
+    if (obj instanceof Blob) {
+      blobRegistry.set(url, obj);
+    }
+    return url;
+  };
+
+  async function relayBlobToParent(blob, fileName) {
+    const buffer = await blob.arrayBuffer();
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    const chunkSize = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+    }
+    window.parent.postMessage({
+      type: 'ZALNET_DOWNLOAD_FILE',
+      fileName: fileName || 'download.bin',
+      mimeType: blob.type || 'application/octet-stream',
+      base64: btoa(binary)
+    }, '*');
+  }
+
+  document.addEventListener('click', function(e) {
+    const anchor = e.target && e.target.closest ? e.target.closest('a') : null;
+    if (!anchor) return;
+    const href = anchor.getAttribute('href') || '';
+    if (anchor.hasAttribute('download') || href.startsWith('blob:')) {
+      const blob = blobRegistry.get(href);
+      if (blob && window.parent && window.parent !== window) {
+        e.preventDefault();
+        e.stopPropagation();
+        relayBlobToParent(blob, anchor.getAttribute('download') || 'export.bin');
+        return;
+      }
+    }
+    if (/^https?:\\/\\//i.test(href) && !anchor.hasAttribute('download')) {
+      e.preventDefault();
+      window.parent.postMessage({ type: 'ZALNET_OPEN_EXTERNAL', url: href }, '*');
+    }
+  }, true);
+
+  const origOpen = window.open;
+  window.open = function(url, target, features) {
+    if (typeof url === 'string' && /^https?:\\/\\//i.test(url)) {
+      window.parent.postMessage({ type: 'ZALNET_OPEN_EXTERNAL', url: url }, '*');
+      return null;
+    }
+    return origOpen ? origOpen.apply(window, arguments) : null;
+  };
+
+  window.addEventListener('keydown', function(e) {
+    const ctrlOrMeta = e.ctrlKey || e.metaKey;
+    if (e.key === 'F11' || (ctrlOrMeta && /^[0-9]$/.test(e.key))) {
+      e.preventDefault();
+      window.parent.postMessage({ type: 'ZALNET_SHORTCUT', key: e.key, ctrlOrMeta: ctrlOrMeta }, '*');
+    }
+  });
+})();
+<\/script>`;
+
+      if (/<head[^>]*>/i.test(rawHtml)) {
+        return rawHtml.replace(/<head[^>]*>/i, (match) => `${match}\n${bridgeScript}`);
+      }
+      return `${bridgeScript}\n${rawHtml}`;
+    }
+
+    /* 폴더 변경 및 복원 */
     async function changeDataFolder() {
       if (!isTauriEnv()) {
         showToast('웹 프리뷰 모드에서는 브라우저 저장소를 사용합니다. EXE 설치 후 폴더 지정이 가능합니다.');
@@ -1082,521 +1409,117 @@
       return clean;
     }
 
-    function getCachedAppHtml(appId) {
-      try {
-        const raw = window.localStorage.getItem(HTML_CACHE_PREFIX + appId);
-        return raw ? JSON.parse(raw) : null;
-      } catch (e) {
-        return null;
+    function toWebGitHubUrl(url) {
+      const clean = (url || '').trim();
+      const match = clean.match(/^https?:\/\/raw\.githubusercontent\.com\/([^/]+)\/([^/]+)\/([^/]+)\/(.+)$/);
+      if (match) {
+        return `https://github.com/${match[1]}/${match[2]}/blob/${match[3]}/${match[4]}`;
       }
+      return clean;
     }
 
-    function saveCachedAppHtml(appId, html, version, commitSha = '') {
-      try {
-        window.localStorage.setItem(
-          HTML_CACHE_PREFIX + appId,
-          JSON.stringify({
-            html,
-            version: version || 'V1.0',
-            commitSha,
-            savedAt: Date.now()
-          })
-        );
-      } catch (e) {}
-    }
-
-    async function fetchGitHubCommitInfo(rawUrl, bypassCache = false) {
-      const CACHE_TTL = 15 * 60 * 1000;
-      let cacheMap = {};
-      try {
-        cacheMap = JSON.parse(window.localStorage.getItem('zalnet_gh_meta_cache') || '{}');
-      } catch (e) {}
-
-      if (!bypassCache && cacheMap[rawUrl] && (Date.now() - cacheMap[rawUrl].ts < CACHE_TTL)) {
-        return cacheMap[rawUrl];
-      }
-
-      try {
-        const match = rawUrl.match(/^https:\/\/raw\.githubusercontent\.com\/([^/]+)\/([^/]+)\/([^/]+)\/(.+)$/);
-        if (!match) return null;
-        const [, owner, repo, branch, encodedPath] = match;
-        const apiUrl = `https://api.github.com/repos/${owner}/${repo}/commits?sha=${branch}&path=${encodedPath}&per_page=1`;
-        const res = await fetch(apiUrl);
-        if (!res.ok) return cacheMap[rawUrl] || null;
-        const commits = await res.json();
-        if (Array.isArray(commits) && commits[0]) {
-          const sha = commits[0].sha || '';
-          const rawDate = commits[0].commit?.committer?.date;
-          const formatted = rawDate
-            ? new Date(rawDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-            : '';
-          cacheMap[rawUrl] = { date: formatted, sha, ts: Date.now() };
-          try {
-            window.localStorage.setItem('zalnet_gh_meta_cache', JSON.stringify(cacheMap));
-          } catch (e) {}
-          return cacheMap[rawUrl];
-        }
-      } catch (e) {}
-      return cacheMap[rawUrl] || null;
-    }
-
-    async function syncAllMetadataFromGitHub(showSpin = false) {
-      const btn = document.getElementById('btn-sync-all');
-      if (showSpin && btn) btn.classList.add('rotate-180');
-
-      let updatedAny = false;
-      let foundNewUpdates = 0;
-
-      await Promise.all(appsList.map(async (app) => {
-        try {
-          const cachedSnap = getCachedAppHtml(app.id);
-          const commitInfo = await fetchGitHubCommitInfo(app.rawUrl, showSpin);
-          if (commitInfo && commitInfo.date && app.lastUpdated !== commitInfo.date) {
-            app.lastUpdated = commitInfo.date;
-            updatedAny = true;
-          }
-
-          const res = await fetch(`${app.rawUrl}?t=${Date.now()}`);
-          if (res.ok) {
-            const remoteHtml = await res.text();
-            const detectedVer = detectVersionFromHtml(remoteHtml, app.rawUrl) || (app.version !== 'CHECKING...' && app.version !== 'AUTO' ? app.version : 'V1.0');
-
-            if (launcherSettings.updateMode === 'auto') {
-              if (app.version !== detectedVer) {
-                app.version = detectedVer;
-                updatedAny = true;
-              }
-              saveCachedAppHtml(app.id, remoteHtml, detectedVer, commitInfo?.sha || '');
-              appUpdateAvailable[app.id] = false;
-            } else {
-              if (!cachedSnap) {
-                saveCachedAppHtml(app.id, remoteHtml, detectedVer, commitInfo?.sha || '');
-                app.version = detectedVer;
-                updatedAny = true;
-                appUpdateAvailable[app.id] = false;
-              } else {
-                const isDifferent = cachedSnap.html.trim() !== remoteHtml.trim();
-                appUpdateAvailable[app.id] = isDifferent;
-                if (isDifferent) foundNewUpdates++;
-                if (app.version === 'CHECKING...' || app.version === 'AUTO') {
-                  app.version = cachedSnap.version || detectedVer;
-                  updatedAny = true;
-                }
-              }
-            }
-          }
-        } catch (e) {
-          if (app.version === 'CHECKING...' || app.version === 'AUTO') {
-            app.version = 'V1.0';
-          }
-        }
-      }));
-
-      if (updatedAny) {
-        await saveLauncherConfig();
-      }
-      await renderDashboard();
-      if (showSpin) {
-        if (launcherSettings.updateMode === 'manual' && foundNewUpdates > 0) {
-          showToast(`${foundNewUpdates}개 프로그램의 새 버전이 감지되었습니다. 카드의 UPDATE 버튼을 눌러 반영하세요.`, 'info');
-        } else {
-          showToast('GitHub 최신 버전 및 업데이트 정보를 동기화했습니다.', 'success');
-        }
-        if (btn) setTimeout(() => btn.classList.remove('rotate-180'), 300);
-      }
-    }
-
-    function normalizeAppsMetadata(list) {
-      const existingIds = new Set(list.map(a => a.id));
-      for (const defApp of DEFAULT_APPS) {
-        if (!existingIds.has(defApp.id)) {
-          list.push(JSON.parse(JSON.stringify(defApp)));
-        }
-      }
-      list.forEach(app => {
-        app.name = stripVersionFromName(app.name) || app.name;
-        if (app.id === 'margin' && app.name === '마진 관리') {
-          app.name = '마진 시뮬레이터';
-        }
-      });
-      return list;
-    }
-
-    function loadLauncherConfigSync() {
-      let loadedApps = null;
-      try {
-        const rawLocal = window.localStorage.getItem('zalnet_launcher_config');
-        if (rawLocal) {
-          const parsed = JSON.parse(rawLocal);
-          if (Array.isArray(parsed.apps) && parsed.apps.length > 0) {
-            loadedApps = parsed.apps;
-          }
-          if (parsed.settings && typeof parsed.settings === 'object') {
-            launcherSettings = {
-              ...launcherSettings,
-              ...parsed.settings,
-              quickLinks: Array.isArray(parsed.settings.quickLinks) && parsed.settings.quickLinks.length > 0
-                ? parsed.settings.quickLinks
-                : launcherSettings.quickLinks
-            };
-          }
-        }
-      } catch (e) {}
-
-      if (loadedApps) {
-        appsList = normalizeAppsMetadata(loadedApps);
-      } else {
-        appsList = JSON.parse(JSON.stringify(DEFAULT_APPS));
-      }
-      applyTheme(launcherSettings.theme);
-      applySandboxBadge();
-    }
-
-    async function loadLauncherConfig() {
-      loadLauncherConfigSync();
-      let diskApps = null;
-
-      if (isTauriEnv()) {
-        try {
-          const cfgPath = await getFilePath('launcher_config.json');
-          const raw = await nativeReadText(cfgPath);
-          const parsed = JSON.parse(raw);
-          if (Array.isArray(parsed.apps) && parsed.apps.length > 0) {
-            diskApps = parsed.apps;
-          }
-          if (parsed.settings && typeof parsed.settings === 'object') {
-            launcherSettings = {
-              ...launcherSettings,
-              ...parsed.settings,
-              quickLinks: Array.isArray(parsed.settings.quickLinks) && parsed.settings.quickLinks.length > 0
-                ? parsed.settings.quickLinks
-                : launcherSettings.quickLinks
-            };
-          }
-        } catch (e) {}
-      }
-
-      if (diskApps) {
-        appsList = normalizeAppsMetadata(diskApps);
-      }
-      applyTheme(launcherSettings.theme);
-      applySandboxBadge();
-      await saveLauncherConfig();
-    }
-
-    async function saveLauncherConfig() {
-      const jsonStr = JSON.stringify({ apps: appsList, settings: launcherSettings }, null, 2);
-      try {
-        window.localStorage.setItem('zalnet_launcher_config', jsonStr);
-      } catch (e) {}
-
-      if (isTauriEnv()) {
-        try {
-          const cfgPath = await getFilePath('launcher_config.json');
-          await nativeWriteText(cfgPath, jsonStr);
-        } catch (e) {
-          console.error('설정 파일 저장 실패:', e);
-        }
-      }
-    }
-
-    function preloadAppStorageSync(appId) {
-      if (storageCache[appId]) return;
-      try {
-        const rawLocal = window.localStorage.getItem(`zalnet_app_data_${appId}`);
-        storageCache[appId] = rawLocal ? JSON.parse(rawLocal) : {};
-      } catch (e) {
-        storageCache[appId] = {};
-      }
-    }
-
-    async function preloadAppStorage(appId) {
-      preloadAppStorageSync(appId);
-
-      if (isTauriEnv()) {
-        try {
-          const filePath = await getFilePath(`${appId}_storage.json`);
-          const content = await nativeReadText(filePath);
-          storageCache[appId] = JSON.parse(content);
-        } catch (e) {}
-      }
-    }
-
-    async function writeAppStorageNow(appId) {
-      if (launcherSettings.sandboxMode) return;
-      const jsonStr = JSON.stringify(storageCache[appId] || {}, null, 2);
-      try {
-        window.localStorage.setItem(`zalnet_app_data_${appId}`, jsonStr);
-      } catch (e) {}
-
-      if (isTauriEnv()) {
-        try {
-          const filePath = await getFilePath(`${appId}_storage.json`);
-          await nativeWriteText(filePath, jsonStr);
-        } catch (e) {
-          console.error(`[${appId}] 디스크 저장 실패:`, e);
-        }
-      }
-    }
-
-    function syncToDisk(appId) {
-      if (launcherSettings.sandboxMode) return;
-      clearTimeout(saveTimers[appId]);
-      saveTimers[appId] = setTimeout(() => {
-        delete saveTimers[appId];
-        writeAppStorageNow(appId);
-      }, 200);
-    }
-
-    async function flushAllPendingSavesAsync() {
-      const promises = [];
-      for (const appId of Object.keys(saveTimers)) {
-        clearTimeout(saveTimers[appId]);
-        delete saveTimers[appId];
-        promises.push(writeAppStorageNow(appId));
-      }
-      await Promise.all(promises);
-    }
-
-    window.addEventListener('beforeunload', () => {
-      flushAllPendingSavesAsync();
-    });
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'hidden') flushAllPendingSavesAsync();
-    });
-
-    // iframe 메시지 수신
-    window.addEventListener('message', async (event) => {
-      const msg = event.data;
-      if (!msg) return;
-      if (msg.type === 'SYNC_LOCAL_STORAGE') {
-        if (launcherSettings.sandboxMode) {
-          sandboxCache[msg.appId] = msg.data;
-        } else {
-          storageCache[msg.appId] = msg.data;
-          syncToDisk(msg.appId);
-        }
-      } else if (msg.type === 'LAUNCHER_SHORTCUT') {
-        handleLauncherShortcut(msg.key, msg.ctrlOrMeta);
-      } else if (msg.type === 'OPEN_EXTERNAL_URL' && msg.url) {
-        openExternalUrl(msg.url);
-      }
-    });
-
-    async function openExternalUrl(url) {
-      if (!url) return;
-      if (isTauriEnv()) {
-        try {
-          await getTauri().core.invoke('open_external_url', { url });
-          showToast('기본 웹 브라우저로 외부 링크를 열었습니다.');
-          return;
-        } catch (e) {}
-      }
-      window.open(url, '_blank', 'noopener,noreferrer');
-    }
-
-    function createBridgeScript(appId, initialData) {
-      const serialized = JSON.stringify(initialData).replace(/<\/script>/gi, '<\\/script>');
-      return [
-        '<scr' + 'ipt>',
-        '(function() {',
-        '  const APP_ID = ' + JSON.stringify(appId) + ';',
-        '  const store = ' + serialized + ';',
-        '  function notifyParent() {',
-        '    window.parent.postMessage({ type: "SYNC_LOCAL_STORAGE", appId: APP_ID, data: store }, "*");',
-        '  }',
-        '  const customStorage = {',
-        '    getItem: function(k) { return Object.prototype.hasOwnProperty.call(store, k) ? store[k] : null; },',
-        '    setItem: function(k, v) { store[k] = String(v); notifyParent(); },',
-        '    removeItem: function(k) { delete store[k]; notifyParent(); },',
-        '    clear: function() { for (const k in store) delete store[k]; notifyParent(); },',
-        '    key: function(i) { return Object.keys(store)[i] || null; },',
-        '    get length() { return Object.keys(store).length; }',
-        '  };',
-        '  try {',
-        '    Object.defineProperty(window, "localStorage", { value: customStorage, configurable: true, writable: true });',
-        '  } catch (e) {}',
-        '  window.addEventListener("keydown", function(e) {',
-        '    const ctrlOrMeta = e.ctrlKey || e.metaKey;',
-        '    if (e.key === "F11" || e.key === "Escape" || (ctrlOrMeta && /^[0-9]$/.test(e.key))) {',
-        '      if (e.key === "F11" || (ctrlOrMeta && /^[0-9]$/.test(e.key))) e.preventDefault();',
-        '      window.parent.postMessage({ type: "LAUNCHER_SHORTCUT", key: e.key, ctrlOrMeta: ctrlOrMeta }, "*");',
-        '    }',
-        '  });',
-        '  document.addEventListener("click", function(e) {',
-        '    const anchor = e.target && e.target.closest ? e.target.closest("a") : null;',
-        '    if (anchor && anchor.href && /^https?:\\/\\//i.test(anchor.href)) {',
-        '      e.preventDefault();',
-        '      e.stopPropagation();',
-        '      window.parent.postMessage({ type: "OPEN_EXTERNAL_URL", url: anchor.href }, "*");',
-        '    }',
-        '  }, true);',
-        '  const origOpen = window.open;',
-        '  window.open = function(url) {',
-        '    if (typeof url === "string" && /^https?:\\/\\//i.test(url)) {',
-        '      window.parent.postMessage({ type: "OPEN_EXTERNAL_URL", url: url }, "*");',
-        '      return null;',
-        '    }',
-        '    return origOpen ? origOpen.apply(this, arguments) : null;',
-        '  };',
-        '})();',
-        '</scr' + 'ipt>'
-      ].join('\n');
-    }
-
-    async function openOrSwitchApp(appId, forceReload = false) {
+    function openAppGitHub(appId) {
       const app = appsList.find(a => a.id === appId);
-      if (!app) return;
-
-      const container = document.getElementById('workspaces-container');
-      let iframe = document.getElementById(`frame-${appId}`);
-
-      if (iframe && runningAppIds.has(appId) && !forceReload) {
-        activateView(appId);
+      if (!app || !app.rawUrl) {
+        showToast('등록된 GitHub 주소가 없습니다.', 'error');
         return;
       }
+      openExternalUrl(toWebGitHubUrl(app.rawUrl));
+    }
 
-      try {
-        await preloadAppStorage(appId);
-        const initialStore = launcherSettings.sandboxMode
-          ? JSON.parse(JSON.stringify(storageCache[appId] || {}))
-          : (storageCache[appId] || {});
+    async function syncAllMetadataFromGitHub(showFeedback = false) {
+      const btn = document.getElementById('btn-sync-all');
+      if (btn) btn.classList.add('animate-spin');
 
-        let htmlCode = null;
-        const cachedSnap = getCachedAppHtml(appId);
-        const shouldFetchRemote = forceReload || launcherSettings.updateMode === 'auto' || !cachedSnap;
-
-        if (shouldFetchRemote) {
-          showToast(`[${app.name}] GitHub에서 최신 코드를 불러오는 중...`);
-          try {
-            const response = await fetch(`${app.rawUrl}?t=${Date.now()}`);
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            htmlCode = await response.text();
-            const detectedVer = detectVersionFromHtml(htmlCode, app.rawUrl) || app.version || 'V1.0';
+      let updatedCount = 0;
+      for (const app of appsList) {
+        try {
+          const rawUrl = toRawGitHubUrl(app.rawUrl);
+          if (!rawUrl) continue;
+          const res = await fetch(`${rawUrl}?t=${Date.now()}`);
+          if (!res.ok) continue;
+          const html = await res.text();
+          const detectedVer = detectVersionFromHtml(html, rawUrl);
+          if (detectedVer) {
             app.version = detectedVer;
-            saveCachedAppHtml(appId, htmlCode, detectedVer);
-            appUpdateAvailable[appId] = false;
-            await saveLauncherConfig();
-          } catch (fetchErr) {
-            if (cachedSnap && cachedSnap.html) {
-              htmlCode = cachedSnap.html;
-              showToast(`[${app.name}] 오프라인 캐시 버전으로 실행합니다.`);
-            } else {
-              throw fetchErr;
-            }
+          } else if (app.version === 'CHECKING...' || app.version === 'AUTO') {
+            app.version = 'LATEST';
           }
-        } else {
-          htmlCode = cachedSnap.html;
-          showToast(`[${app.name}] 저장된 버전(${cachedSnap.version || app.version})으로 실행합니다.`);
-        }
 
-        const bridgeTag = createBridgeScript(appId, initialStore);
-        if (/<head[^>]*>/i.test(htmlCode)) {
-          htmlCode = htmlCode.replace(/<head[^>]*>/i, function(m) {
-            return m + '\n' + bridgeTag;
-          });
-        } else {
-          htmlCode = bridgeTag + '\n' + htmlCode;
-        }
+          const cachedHtml = window.localStorage.getItem(`${HTML_CACHE_PREFIX}${app.id}`);
+          if (cachedHtml && cachedHtml !== html) {
+            appUpdateAvailable[app.id] = true;
+            updatedCount++;
+          } else if (!cachedHtml) {
+            window.localStorage.setItem(`${HTML_CACHE_PREFIX}${app.id}`, html);
+          }
 
-        if (!iframe) {
-          iframe = document.createElement('iframe');
-          iframe.id = `frame-${appId}`;
-          iframe.className = 'app-frame';
-          container.appendChild(iframe);
-        }
-
-        if (blobUrls[appId]) URL.revokeObjectURL(blobUrls[appId]);
-        blobUrls[appId] = URL.createObjectURL(new Blob([htmlCode], { type: 'text/html;charset=utf-8' }));
-        iframe.src = blobUrls[appId];
-
-        runningAppIds.add(appId);
-        activateView(appId);
-        if (shouldFetchRemote) {
-          showToast(`[${app.name}] 실행 완료`, 'success');
-        }
-      } catch (err) {
-        showToast(`로드 실패 (${app.name}): ${err.message}`, 'error');
-      }
-    }
-
-    async function closeRunningApp(appId, event) {
-      if (event) event.stopPropagation();
-      const app = appsList.find(a => a.id === appId);
-      if (!app || !runningAppIds.has(appId)) return;
-
-      await flushAllPendingSavesAsync();
-
-      const iframe = document.getElementById(`frame-${appId}`);
-      if (iframe) iframe.remove();
-
-      if (blobUrls[appId]) {
-        URL.revokeObjectURL(blobUrls[appId]);
-        delete blobUrls[appId];
+          if (!app.lastUpdated) {
+            app.lastUpdated = new Date().toISOString().slice(0, 10);
+          }
+        } catch (e) {}
       }
 
-      runningAppIds.delete(appId);
-      showToast(`[${app.name}] 프로그램을 닫았습니다.`);
+      if (btn) btn.classList.remove('animate-spin');
+      await saveLauncherConfig();
+      await renderDashboard();
 
-      if (activeViewId === appId) {
-        showDashboard();
-      } else {
-        renderQuickTabs();
-        if (activeViewId === 'dashboard') {
-          renderDashboard();
+      if (showFeedback) {
+        if (updatedCount > 0) {
+          showToast(`GitHub에서 ${updatedCount}개 앱의 신규 업데이트를 감지했습니다.`, 'success');
+        } else {
+          showToast('모든 프로그램의 버전과 연결 상태를 최신으로 확인했습니다.', 'success');
         }
       }
     }
 
-    function activateView(viewId) {
-      activeViewId = viewId;
-      const dashboard = document.getElementById('dashboard-view');
-      const settingsView = document.getElementById('settings-view');
-      const closeCurrentBtn = document.getElementById('btn-close-current-app');
-      const reloadCurrentBtn = document.getElementById('btn-reload-current-app');
-      const navSettingsBtn = document.getElementById('btn-nav-settings');
+    /* 뷰 전환 (대시보드 / 설정 / 앱 워크스페이스) */
+    function updateHeaderViewControls() {
+      const isAppView = activeViewId !== 'dashboard' && activeViewId !== 'settings';
+      const reloadBtn = document.getElementById('btn-reload-current-app');
+      const closeBtn = document.getElementById('btn-close-current-app');
+      const settingsBtn = document.getElementById('btn-nav-settings');
 
-      if (navSettingsBtn) {
-        navSettingsBtn.classList.toggle('btn-solid', viewId === 'settings');
+      if (reloadBtn) {
+        reloadBtn.classList.toggle('hidden', !isAppView);
+        reloadBtn.classList.toggle('flex', isAppView);
       }
-
-      if (viewId === 'dashboard') {
-        dashboard.classList.remove('hidden');
-        settingsView.classList.add('hidden');
-        document.querySelectorAll('.app-frame').forEach(f => f.classList.remove('active'));
-        if (closeCurrentBtn) { closeCurrentBtn.classList.add('hidden'); closeCurrentBtn.classList.remove('flex'); }
-        if (reloadCurrentBtn) { reloadCurrentBtn.classList.add('hidden'); reloadCurrentBtn.classList.remove('flex'); }
-        renderDashboard();
-      } else if (viewId === 'settings') {
-        dashboard.classList.add('hidden');
-        settingsView.classList.remove('hidden');
-        document.querySelectorAll('.app-frame').forEach(f => f.classList.remove('active'));
-        if (closeCurrentBtn) { closeCurrentBtn.classList.add('hidden'); closeCurrentBtn.classList.remove('flex'); }
-        if (reloadCurrentBtn) { reloadCurrentBtn.classList.add('hidden'); reloadCurrentBtn.classList.remove('flex'); }
-        syncSettingsViewData();
-      } else {
-        dashboard.classList.add('hidden');
-        settingsView.classList.add('hidden');
-        document.querySelectorAll('.app-frame').forEach(f => {
-          f.classList.toggle('active', f.id === `frame-${viewId}`);
-        });
-        if (closeCurrentBtn) { closeCurrentBtn.classList.remove('hidden'); closeCurrentBtn.classList.add('flex'); }
-        if (reloadCurrentBtn) { reloadCurrentBtn.classList.remove('hidden'); reloadCurrentBtn.classList.add('flex'); }
+      if (closeBtn) {
+        closeBtn.classList.toggle('hidden', !isAppView);
+        closeBtn.classList.toggle('flex', isAppView);
       }
-      renderQuickTabs();
+      if (settingsBtn) {
+        if (activeViewId === 'settings') {
+          settingsBtn.className = 'h-[30px] px-2.5 btn-solid border text-xs transition-colors flex items-center gap-1.5 rounded-none';
+        } else {
+          settingsBtn.className = 'h-[30px] px-2.5 bg-surface border border-line text-ink text-xs hover:bg-subtle transition-colors flex items-center gap-1.5 rounded-none';
+        }
+      }
     }
 
     function showDashboard() {
-      activateView('dashboard');
+      activeViewId = 'dashboard';
+      document.getElementById('dashboard-view').classList.remove('hidden');
+      document.getElementById('settings-view').classList.add('hidden');
+      document.querySelectorAll('.app-frame').forEach(f => f.classList.remove('active'));
+      updateHeaderViewControls();
+      renderQuickTabs();
+      renderDashboard();
     }
 
-    function showSettingsView() {
-      activateView('settings');
+    async function showSettingsView() {
+      activeViewId = 'settings';
+      document.getElementById('dashboard-view').classList.add('hidden');
+      document.getElementById('settings-view').classList.remove('hidden');
+      document.querySelectorAll('.app-frame').forEach(f => f.classList.remove('active'));
+      updateHeaderViewControls();
+      renderQuickTabs();
+      await syncSettingsViewData();
     }
 
     async function syncSettingsViewData() {
-      const updateModeSel = document.getElementById('setting-update-mode');
-      if (updateModeSel) updateModeSel.value = launcherSettings.updateMode || 'auto';
+      const modeSel = document.getElementById('setting-update-mode');
+      if (modeSel) modeSel.value = launcherSettings.updateMode || 'auto';
 
       const notifyCb = document.getElementById('setting-notify-update');
       if (notifyCb) notifyCb.checked = launcherSettings.notifyUpdates !== false;
@@ -1611,77 +1534,165 @@
       if (autoCb) autoCb.checked = !!launcherSettings.autostart;
 
       applyTheme(launcherSettings.theme);
-      renderQuickLinksButtons();
 
-      const pathBox = document.getElementById('settings-data-path');
-      if (pathBox) pathBox.innerText = await getDataDir();
+      const pathEl = document.getElementById('settings-data-path');
+      if (pathEl) pathEl.innerText = await getDataDir();
 
-      const noteBox = document.getElementById('native-status-note');
-      if (noteBox) {
-        if (isTauriEnv()) {
-          const hasAutostart = !!(getTauri() && getTauri().autostart);
-          noteBox.innerText = hasAutostart
-            ? 'NATIVE DESKTOP MODE: 시스템 트레이 및 윈도우 시작 자동 실행 모듈이 활성화되어 있습니다.'
-            : 'NATIVE DESKTOP MODE: 트레이 및 자동 실행 기능을 활성화하려면 최신 빌드 가이드를 적용해 주세요.';
-        } else {
-          noteBox.innerText = 'WEB PREVIEW MODE: 설치형 EXE 환경에서 실행 시 트레이 최소화 및 자동 실행이 작동합니다.';
-        }
+      const envNote = document.getElementById('native-status-note');
+      if (envNote) {
+        envNote.innerText = isTauriEnv()
+          ? 'DESKTOP NATIVE RUNTIME CONNECTED (TAURI V2)'
+          : 'WEB PREVIEW MODE (EXE 설치 시 트레이 최소화·자동 실행 활성화)';
       }
+
+      renderQuickLinksButtons();
     }
 
-    /* 빠른 업무 바로가기 링크 렌더링 및 편집 */
+    /* 빠른 링크 관리 */
     function renderQuickLinksButtons() {
-      const container = document.getElementById('quick-links-buttons');
-      if (!container) return;
-      container.innerHTML = '';
-
-      (launcherSettings.quickLinks || []).forEach((link, idx) => {
+      const box = document.getElementById('quick-links-buttons');
+      if (!box) return;
+      box.innerHTML = '';
+      for (const item of launcherSettings.quickLinks || []) {
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.className = idx === 0
-          ? 'h-8 px-3.5 btn-solid border font-mono text-[11px] font-semibold tracking-[0.04em] transition-colors'
-          : 'h-8 px-3.5 bg-surface border border-line text-ink font-mono text-[11px] font-semibold tracking-[0.04em] hover:bg-subtle transition-colors';
-        btn.innerText = link.label;
-        btn.onclick = () => openExternalUrl(link.url);
-        container.appendChild(btn);
-      });
+        btn.className = item.primary
+          ? 'h-8 px-3.5 btn-solid border font-mono text-[11px] font-semibold tracking-[0.04em]'
+          : 'h-8 px-3.5 bg-surface border border-line text-ink font-mono text-[11px] font-semibold hover:bg-subtle tracking-[0.04em]';
+        btn.innerText = item.label;
+        btn.onclick = () => openExternalUrl(item.url);
+        box.appendChild(btn);
+      }
     }
 
     function openQuickLinksEditor() {
       const list = document.getElementById('quick-links-editor-list');
       list.innerHTML = '';
-      (launcherSettings.quickLinks || []).forEach(link => addQuickLinkRow(link.label, link.url));
+      (launcherSettings.quickLinks || []).forEach(item => {
+        addQuickLinkRow(item.label, item.url, item.primary);
+      });
       openModal('links-modal');
     }
 
-    function addQuickLinkRow(label = '', url = '') {
+    function addQuickLinkRow(label = '', url = '', primary = false) {
       const list = document.getElementById('quick-links-editor-list');
       const row = document.createElement('div');
-      row.className = 'flex gap-1.5 items-center quick-link-row';
+      row.className = 'flex items-center gap-1.5';
       row.innerHTML = `
-        <input type="text" placeholder="버튼명 (예: COUPANG WING)" value="${label}" class="w-36 h-8 px-2 border border-line bg-surface text-ink font-mono text-xs outline-none focus:border-ink" />
-        <input type="text" placeholder="https://..." value="${url}" class="flex-1 h-8 px-2 border border-line bg-surface text-ink font-mono text-xs outline-none focus:border-ink" />
-        <button type="button" onclick="this.parentElement.remove()" class="h-8 w-8 border border-line bg-surface text-red-600 hover:bg-red-500/10">✕</button>
+        <input type="text" placeholder="버튼 이름" value="${label}" class="link-label-input w-32 h-8 px-2 border border-line bg-surface text-ink font-mono text-xs" />
+        <input type="text" placeholder="https://..." value="${url}" class="link-url-input flex-1 h-8 px-2 border border-line bg-surface text-ink font-mono text-xs" />
+        <label class="flex items-center gap-1 text-[11px] text-inksec shrink-0 cursor-pointer">
+          <input type="checkbox" class="link-primary-input accent-ink" ${primary ? 'checked' : ''} />
+          <span>강조</span>
+        </label>
+        <button type="button" onclick="this.parentElement.remove()" class="h-8 w-8 border border-line bg-surface hover:bg-subtle text-xs">✕</button>
       `;
       list.appendChild(row);
     }
 
     async function saveQuickLinksEditor() {
-      const rows = Array.from(document.querySelectorAll('#quick-links-editor-list .quick-link-row'));
-      const nextLinks = [];
-      for (const r of rows) {
-        const inputs = r.querySelectorAll('input');
-        const label = inputs[0].value.trim();
-        const url = inputs[1].value.trim();
+      const rows = document.querySelectorAll('#quick-links-editor-list > div');
+      const updated = [];
+      rows.forEach(row => {
+        const label = row.querySelector('.link-label-input').value.trim();
+        const url = row.querySelector('.link-url-input').value.trim();
+        const primary = row.querySelector('.link-primary-input').checked;
         if (label && url) {
-          nextLinks.push({ label, url });
+          updated.push({ label, url, primary });
         }
-      }
-      launcherSettings.quickLinks = nextLinks.length > 0 ? nextLinks : JSON.parse(JSON.stringify(DEFAULT_QUICK_LINKS));
+      });
+      launcherSettings.quickLinks = updated;
       await saveSettings();
       renderQuickLinksButtons();
       closeModal('links-modal');
       showToast('업무 바로가기 링크가 저장되었습니다.', 'success');
+    }
+
+    /* 앱 실행 및 백그라운드 전환 */
+    async function openOrSwitchApp(appId, forceReload = false) {
+      const app = appsList.find(a => a.id === appId);
+      if (!app) return;
+
+      activeViewId = appId;
+      document.getElementById('dashboard-view').classList.add('hidden');
+      document.getElementById('settings-view').classList.add('hidden');
+      updateHeaderViewControls();
+
+      const container = document.getElementById('workspaces-container');
+      let frame = document.getElementById(`frame-${appId}`);
+
+      if (!frame || forceReload) {
+        if (frame) frame.remove();
+        if (blobUrls[appId]) {
+          URL.revokeObjectURL(blobUrls[appId]);
+          delete blobUrls[appId];
+        }
+
+        showToast(`[${app.name}] GitHub에서 최신 소스를 불러오는 중...`);
+        try {
+          const rawUrl = toRawGitHubUrl(app.rawUrl);
+          const cachedHtml = window.localStorage.getItem(`${HTML_CACHE_PREFIX}${appId}`);
+          let htmlCode = '';
+
+          if (!forceReload && launcherSettings.updateMode === 'manual' && cachedHtml) {
+            htmlCode = cachedHtml;
+          } else {
+            const res = await fetch(`${rawUrl}?t=${Date.now()}`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            htmlCode = await res.text();
+            window.localStorage.setItem(`${HTML_CACHE_PREFIX}${appId}`, htmlCode);
+            appUpdateAvailable[appId] = false;
+            app.lastUpdated = new Date().toISOString().slice(0, 10);
+            const detectedVer = detectVersionFromHtml(htmlCode, rawUrl);
+            if (detectedVer) app.version = detectedVer;
+            await saveLauncherConfig();
+          }
+
+          const initialStore = await preloadAppStorage(appId);
+          const bridgedHtml = injectLauncherBridgeIntoHtml(htmlCode, appId, initialStore);
+          const blob = new Blob([bridgedHtml], { type: 'text/html;charset=utf-8' });
+          const blobUrl = URL.createObjectURL(blob);
+          blobUrls[appId] = blobUrl;
+
+          frame = document.createElement('iframe');
+          frame.id = `frame-${appId}`;
+          frame.className = 'app-frame';
+          frame.src = blobUrl;
+          container.appendChild(frame);
+          runningAppIds.add(appId);
+        } catch (err) {
+          showToast(`[${app.name}] 실행 실패: ${err.message}`, 'error');
+          showDashboard();
+          return;
+        }
+      }
+
+      document.querySelectorAll('.app-frame').forEach(f => f.classList.remove('active'));
+      frame.classList.add('active');
+      renderQuickTabs();
+    }
+
+    async function closeRunningApp(appId, event) {
+      if (event) event.stopPropagation();
+      const app = appsList.find(a => a.id === appId);
+      if (!app) return;
+
+      await flushAllPendingSavesAsync();
+      runningAppIds.delete(appId);
+      const frame = document.getElementById(`frame-${appId}`);
+      if (frame) frame.remove();
+      if (blobUrls[appId]) {
+        URL.revokeObjectURL(blobUrls[appId]);
+        delete blobUrls[appId];
+      }
+
+      if (activeViewId === appId) {
+        showDashboard();
+      } else {
+        renderQuickTabs();
+        await renderDashboard();
+      }
+      showToast(`[${app.name}] 프로그램이 종료되었습니다.`);
     }
 
     function renderQuickTabs() {
@@ -1689,86 +1700,86 @@
       if (!nav) return;
       nav.innerHTML = '';
 
-      const homeBtn = document.createElement('button');
-      homeBtn.type = 'button';
-      homeBtn.className = `h-[30px] px-3 text-xs font-mono font-semibold border transition-colors shrink-0 ${
-        activeViewId === 'dashboard'
-          ? 'btn-solid'
-          : 'bg-transparent text-inksec border-transparent hover:bg-subtle hover:text-ink'
-      }`;
-      homeBtn.innerText = 'APPS';
-      homeBtn.onclick = showDashboard;
-      nav.appendChild(homeBtn);
-
-      appsList.forEach(app => {
+      appsList.forEach((app, idx) => {
         const isRunning = runningAppIds.has(app.id);
         const isActive = activeViewId === app.id;
-        const tabWrap = document.createElement('div');
-        tabWrap.className = `h-[30px] flex items-center border transition-colors shrink-0 ${
+        const wrap = document.createElement('div');
+        wrap.className = `inline-flex items-center border shrink-0 transition-colors ${
           isActive
-            ? 'btn-solid font-semibold'
-            : 'bg-transparent text-inksec border-transparent hover:bg-subtle hover:text-ink'
+            ? 'btn-solid'
+            : isRunning
+              ? 'bg-subtle border-line text-ink'
+              : 'bg-surface border-linelight text-inksec hover:text-ink hover:border-line'
         }`;
 
-        const openBtn = document.createElement('button');
-        openBtn.type = 'button';
-        openBtn.className = 'h-full px-2.5 text-xs flex items-center gap-1.5';
-        openBtn.innerHTML = `${isRunning ? '<span class="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span>' : ''}<span>${app.name}</span>`;
-        openBtn.onclick = () => openOrSwitchApp(app.id, false);
-        tabWrap.appendChild(openBtn);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'h-[28px] px-2.5 text-[11.5px] font-medium flex items-center gap-1.5';
+        btn.title = `${app.name} 열기 (Ctrl+${idx + 1})`;
+        btn.innerHTML = `
+          ${isRunning ? '<span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>' : ''}
+          <span>${app.name}</span>
+        `;
+        btn.onclick = () => openOrSwitchApp(app.id, false);
+        wrap.appendChild(btn);
 
         if (isRunning) {
-          const closeTabBtn = document.createElement('button');
-          closeTabBtn.type = 'button';
-          closeTabBtn.title = `${app.name} 닫기`;
-          closeTabBtn.className = `h-full px-1.5 text-[11px] opacity-65 hover:opacity-100`;
-          closeTabBtn.innerText = '×';
-          closeTabBtn.onclick = (e) => closeRunningApp(app.id, e);
-          tabWrap.appendChild(closeTabBtn);
+          const closeX = document.createElement('button');
+          closeX.type = 'button';
+          closeX.className = 'h-[28px] px-1.5 text-[10px] opacity-65 hover:opacity-100';
+          closeX.title = '닫기';
+          closeX.innerText = '✕';
+          closeX.onclick = (e) => closeRunningApp(app.id, e);
+          wrap.appendChild(closeX);
         }
 
-        nav.appendChild(tabWrap);
+        nav.appendChild(wrap);
       });
     }
 
+    /* 대시보드 카드 렌더링 */
     function renderAppCardsDOM(filtered, sortBy, keyword) {
       const grid = document.getElementById('apps-grid');
       if (!grid) return;
-      grid.innerHTML = '';
 
       if (filtered.length === 0) {
-        grid.innerHTML = `<div class="col-span-full bg-surface border border-line p-8 text-center text-xs text-inkmuted">표시할 프로그램이 없습니다.</div>`;
+        grid.innerHTML = `
+          <div class="col-span-full bg-surface border border-line p-10 text-center text-xs text-inkmuted">
+            조건에 일치하는 프로그램이 없습니다.
+          </div>
+        `;
         return;
       }
 
+      const canReorder = sortBy === 'custom' && !keyword && currentFilter === 'all';
+      grid.innerHTML = '';
+
       for (const app of filtered) {
-        preloadAppStorageSync(app.id);
         const isRunning = runningAppIds.has(app.id);
         const hasNewUpdate = launcherSettings.notifyUpdates !== false && !!appUpdateAvailable[app.id];
-        const dataObj = storageCache[app.id] || {};
-        const dataKeys = Object.keys(dataObj).length;
-        const dataBytes = new Blob([JSON.stringify(dataObj)]).size;
-        const sizeLabel = dataKeys > 0 ? `${(dataBytes / 1024).toFixed(1)} KB (${dataKeys}항목)` : '저장 데이터 없음';
         const appIndex = appsList.findIndex(a => a.id === app.id);
-        const canReorder = sortBy === 'custom' && !keyword && currentFilter === 'all';
-        const shortcutHint = appIndex >= 0 && appIndex < 9 ? `Ctrl+${appIndex + 1}` : '';
+        const storeObj = launcherSettings.sandboxMode ? (sandboxCache[app.id] || {}) : (storageCache[app.id] || {});
+        const itemCount = Object.keys(storeObj).length;
+        const sizeLabel = itemCount > 0 ? `${itemCount} keys saved` : 'Empty';
 
-        const card = document.createElement('div');
-        card.className = 'bg-surface border border-line hover:border-inkmuted transition-colors flex flex-col';
+        const card = document.createElement('article');
+        card.className = `bg-surface border flex flex-col transition-colors ${
+          isRunning ? 'border-ink' : 'border-line hover:border-inksec'
+        }`;
+
         card.innerHTML = `
-          <div class="flex justify-between items-center px-3.5 py-2 border-b border-linelight font-mono text-[10px] text-inksec">
-            <div class="flex items-center gap-2">
-              <span class="font-semibold text-ink">${app.version || 'V1.0'}</span>
-              ${shortcutHint ? `<span class="text-inkmuted">[${shortcutHint}]</span>` : ''}
-              ${isRunning ? `<span class="text-green-600 font-bold flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-green-600 inline-block"></span>RUNNING</span>` : ''}
-              ${hasNewUpdate ? `<span class="bg-artblue text-white px-1.5 py-0.5 text-[9px] font-bold">NEW UPDATE</span>` : ''}
-            </div>
+          <div class="px-3.5 py-2 border-b border-linelight flex items-center justify-between gap-2 font-mono text-[10px] text-inkmuted">
             <div class="flex items-center gap-1.5">
+              <span class="px-1.5 py-0.5 bg-subtle text-ink font-semibold">${app.version || 'V1.0'}</span>
+              ${isRunning ? '<span class="px-1.5 py-0.5 bg-green-600 text-white font-bold">RUNNING</span>' : ''}
+              ${hasNewUpdate ? '<span class="px-1.5 py-0.5 bg-artblue text-white font-bold">NEW UPDATE</span>' : ''}
+            </div>
+            <div class="flex items-center gap-1">
               ${canReorder ? `
                 <button type="button" onclick="moveAppOrder('${app.id}', -1)" ${appIndex === 0 ? 'disabled' : ''} title="앞으로 이동" class="px-1 border border-linelight bg-canvas hover:bg-subtle disabled:opacity-30">◀</button>
                 <button type="button" onclick="moveAppOrder('${app.id}', 1)" ${appIndex === appsList.length - 1 ? 'disabled' : ''} title="뒤로 이동" class="px-1 border border-linelight bg-canvas hover:bg-subtle disabled:opacity-30">▶</button>
               ` : ''}
-              <button type="button" onclick="openAppEditModal('${app.id}')" class="hover:text-ink hover:underline ml-1">GITHUB ↗</button>
+              <button type="button" onclick="openAppGitHub('${app.id}')" title="GitHub 저장소 페이지 열기" class="hover:text-ink hover:underline ml-1">GITHUB ↗</button>
             </div>
           </div>
           <div class="p-4 flex-1 flex flex-col gap-2.5">
@@ -2436,22 +2447,8 @@
       if (window.__TAURI__ && window.__TAURI__.window) {
         try {
           const appWindow = window.__TAURI__.window.getCurrentWindow();
-          await appWindow.onCloseRequested(async (event) => {
+          await appWindow.onCloseRequested(async () => {
             await flushAllPendingSavesAsync();
-            if (launcherSettings.keepInTray !== false) {
-              return;
-            }
-            if (runningAppIds.size > 0) {
-              event.preventDefault();
-              const ok = await showConfirm(
-                'ZALNET Suite 종료 확인',
-                `현재 ${runningAppIds.size}개의 프로그램이 실행 중입니다.\n모든 작업 데이터를 저장하고 런처를 종료할까요?`
-              );
-              if (ok) {
-                await flushAllPendingSavesAsync();
-                await appWindow.destroy();
-              }
-            }
           });
         } catch (e) {}
       }
